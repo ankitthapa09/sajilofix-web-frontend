@@ -15,7 +15,7 @@ export default function LoginPage() {
         {/* Background Illustration - Character */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative w-full h-full flex items-center justify-center">
-            {/* You can replace this with the actual character image */}
+            {/* illustration  */}
             <div className="absolute top-10 opacity-20 animate-float">
               <Image src={loginbg} alt="Login Background" className="w-130 h-190  backdrop-blur-sm" />
             </div>
