@@ -82,7 +82,7 @@ export default function LoginForm() {
           onClick={() => setUserType("citizen")}
           className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
             userType === "citizen"
-              ? "bg-green-500 text-white shadow-md"
+              ? "bg-blue-500 text-white shadow-md"
               : "bg-gray-100 text-gray-700 hover:bg-gray-200"
           }`}
         >
@@ -93,7 +93,7 @@ export default function LoginForm() {
           onClick={() => setUserType("admin")}
           className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
             userType === "admin"
-              ? "bg-green-500 text-white shadow-md"
+              ? "bg-blue-500 text-white shadow-md"
               : "bg-gray-100 text-gray-700 hover:bg-gray-200"
           }`}
         >
@@ -197,7 +197,7 @@ export default function LoginForm() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-green-500 hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          className="w-full py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
           {isLoading ? "Signing in..." : "Sign In"}
         </button>
@@ -210,7 +210,7 @@ export default function LoginForm() {
           <button
             type="button"
             onClick={() => router.push("/signup")}
-            className="font-medium text-green-500 hover:text-green-600 transition-colors"
+            className="font-medium text-blue-500 hover:text-blue-800 transition-colors"
           >
             Sign up
           </button>
