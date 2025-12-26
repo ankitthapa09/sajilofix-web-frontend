@@ -126,7 +126,7 @@ export default function SignupForm() {
         <div
           className={`w-12 h-12 rounded-lg flex items-center justify-center font-semibold ${
             currentStep >= 1
-              ? "bg-green-500 text-white"
+              ? "bg-blue-600 text-white"
               : "bg-gray-200 text-gray-500"
           }`}
         >
@@ -136,7 +136,7 @@ export default function SignupForm() {
         <div
           className={`w-12 h-12 rounded-lg flex items-center justify-center font-semibold ${
             currentStep >= 2
-              ? "bg-green-500 text-white"
+              ? "bg-blue-600 text-white"
               : "bg-gray-200 text-gray-500"
           }`}
         >
@@ -146,7 +146,7 @@ export default function SignupForm() {
         <div
           className={`w-12 h-12 rounded-lg flex items-center justify-center font-semibold ${
             currentStep >= 3
-              ? "bg-green-500 text-white"
+              ? "bg-blue-600 text-white"
               : "bg-gray-200 text-gray-500"
           }`}
         >
@@ -166,7 +166,7 @@ export default function SignupForm() {
               <label
                 className={`relative flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
                   step1Form.watch("role") === "citizen"
-                    ? "border-green-500 bg-green-50"
+                    ? "border-blue-600 bg-blue-600/20"
                     : "border-gray-300 hover:border-gray-400"
                 }`}
               >
@@ -179,7 +179,7 @@ export default function SignupForm() {
                 <User
                   className={`mb-2 ${
                     step1Form.watch("role") === "citizen"
-                      ? "text-green-500"
+                      ? "text-blue-500"
                       : "text-gray-400"
                   }`}
                   size={32}
@@ -191,7 +191,7 @@ export default function SignupForm() {
               <label
                 className={`relative flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
                   step1Form.watch("role") === "authority"
-                    ? "border-green-500 bg-green-50"
+                    ? "border-blue-500 bg-blue-50"
                     : "border-gray-300 hover:border-gray-400"
                 }`}
               >
@@ -204,7 +204,7 @@ export default function SignupForm() {
                 <User
                   className={`mb-2 ${
                     step1Form.watch("role") === "authority"
-                      ? "text-green-500"
+                      ? "text-blue-600"
                       : "text-gray-400"
                   }`}
                   size={32}
@@ -295,7 +295,7 @@ export default function SignupForm() {
           {/* Continue Button */}
           <button
             type="submit"
-            className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-green-500 hover:bg-green-600 transition-all"
+            className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-all"
           >
             Continue
             <ArrowRight size={20} />
@@ -363,7 +363,7 @@ export default function SignupForm() {
             </button>
             <button
               type="submit"
-              className="flex-1 flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-green-500 hover:bg-green-600 transition-all"
+              className="flex-1 flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-blue-500 hover:bg-blue-600 transition-all"
             >
               Continue
               <ArrowRight size={20} />
@@ -432,15 +432,15 @@ export default function SignupForm() {
               {...step3Form.register("agreeToTerms")}
               type="checkbox"
               id="agreeToTerms"
-              className="h-4 w-4 text-green-500 focus:ring-green-500 border-gray-300 rounded mt-1"
+              className="h-4 w-4 text-blue-600 focus:ring-blue-600 border-gray-300 rounded mt-1"
             />
             <label htmlFor="agreeToTerms" className="ml-2 block text-sm text-gray-700">
               I agree to the{" "}
-              <a href="#" className="text-green-500 hover:text-green-600">
+              <a href="#" className="text-red-600 hover:text-red-700">
                 Terms of Service
               </a>{" "}
               and{" "}
-              <a href="#" className="text-green-500 hover:text-green-600">
+              <a href="#" className="text-red-600 hover:text-red-700">
                 Privacy Policy
               </a>
             </label>
@@ -464,7 +464,7 @@ export default function SignupForm() {
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="flex-1 py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {isLoading ? "Creating account..." : "Create Account"}
             </button>
@@ -478,7 +478,7 @@ export default function SignupForm() {
           Already have an account?{" "}
           <Link
             href="/login"
-            className="font-medium text-green-500 hover:text-green-600 transition-colors"
+            className="font-medium text-red-500 hover:text-red-700 transition-colors"
           >
             Sign in
           </Link>

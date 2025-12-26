@@ -30,7 +30,7 @@ const LandingPage = () => {
             <div className="relative z-50 pt-6 px-4">
                 {/* <nav className="max-w-6xl mx-auto bg-gradient-to-r from-blue-900/10 via-blue-600/15 to-indigo-900/20 backdrop-blur-2xl border border-white/30 rounded-full px-6 py-3 flex items-center justify-between shadow-[0_8px_32px_0_rgba(31,38,135,0.07)]"> */}
                 {/* <nav className="max-w-6xl mx-auto bg-gradient-to-br from-cyan-400/10 via-blue-500/10 to-indigo-600/10 backdrop-blur-3xl border border-blue-200/20 rounded-full px-6 py-3 flex items-center justify-between shadow-sm"> */}
-                <nav className="max-w-6xl mx-auto bg-gradient-to-b from-blue-50/40 to-white/10 backdrop-blur-md border-t border-l border-white/60 border-b border-r border-white/20 rounded-full px-6 py-3 flex items-center justify-between shadow-xl shadow-blue-900/5">
+                <nav className="max-w-9xl h-27 mx-auto bg-gradient-to-b from-blue-50/40 to-white/10 backdrop-blur-md border-t border-l border-white/60 border-b border-r border-white/20 rounded-full px-6 py-3 flex items-center justify-between shadow-xl shadow-blue-900/5">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2">
                         <div className="mb-2">
@@ -67,7 +67,7 @@ const LandingPage = () => {
 
             {/* --- HERO SECTION --- */}
             <section className="relative z-10 pt-16 pb-32 px-6">
-                {/* Changed text-left to text-center and removed grid to allow full width centering */}
+                {/* text center ma rakhna ko lagi */}
                 <div className="max-w-6xl mx-auto text-center flex flex-col items-center">
 
                     {/* Location Badge */}
@@ -76,7 +76,7 @@ const LandingPage = () => {
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
                         </span>
-                        <span className="text-xs font-bold text-slate-600 tracking-wide uppercase">Live in Kathmandu & Pokhara</span>
+                        <span className="text-xs font-bold text-slate-600 tracking-wide uppercase">Empowering Citizens to Build Better Cities</span>
                     </div>
 
                     {/* Main Headline - Centered & One Line */}
@@ -162,7 +162,7 @@ const LandingPage = () => {
                 <div className="bg-gradient-to-t from-blue-500/40 to-white/20 backdrop-blur-md border-t border-l border-gradient-to-r from-[#041027] to-[#3533cd] border-b border-r border-blue-800/40 rounded-t-[3rem] px-6 py-3 flex items-center justify-between shadow-xl shadow-blue-900/5">
                     <div className="max-w-4xl mx-auto text-center px-9">
 
-                        <h2 className="text-3xl md:text-5xl font-bold text-blue-800/90 mb-4">
+                        <h2 className="text-3xl md:text-5xl font-bold text-blue-800/90 mb-4 py-12">
                             Ready to fix your neighborhood?
                         </h2>
                         <p className="text-blue-100 mb-12 text-lg">
@@ -170,8 +170,8 @@ const LandingPage = () => {
                         </p>
 
                         {/* Floating Stats Box */}
-                        <div className="bg-white rounded-3xl p-8 shadow-2xl mx-auto max-w-3xl transform hover:scale-[1.02] transition-transform duration-500">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+                        <div className="bg-white rounded-4xl p-8 shadow-2xl mx-auto max-w-5xl transform hover:scale-[1.04] transition-transform duration-500">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 divide-y md:divide-y-0 md:divide-x divide-slate-400">
                                 <div className="pt-4 md:pt-0">
                                     <div className="text-4xl font-extrabold text-slate-900 mb-1">2.8k</div>
                                     <div className="text-xs font-bold text-blue-600 uppercase tracking-wider">Reports Filed</div>
@@ -188,7 +188,7 @@ const LandingPage = () => {
                         </div>
 
                         {/* Bottom Buttons */}
-                        <div className="mt-12 flex flex-col sm:flex-row justify-center gap-4">
+                        <div className="mt-12 flex flex-col sm:flex-row justify-center gap-4 mb-12">
                             <button className="bg-white text-slate-900 px-8 py-3.5 rounded-xl font-bold shadow-lg hover:bg-slate-50 transition-colors">
                                 Register as Citizen
                             </button>
@@ -202,7 +202,7 @@ const LandingPage = () => {
             </section>
 
             {/* --- FOOTER --- */}
-            <footer className="bg-[#041027] text-white py-9 px-6">
+            <footer className="bg-[#041027] text-white py-12 px-6">
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-18">
 
                     <div className="flex items-center gap-2">
