@@ -139,7 +139,7 @@ const LandingPage = () => {
             </div>
             <h3 className="text-xl font-bold mb-3 text-slate-900">Track Progress</h3>
             <p className="text-slate-500 text-sm leading-relaxed">
-              Receive notifications as the status changes from "Reported" to "In-Progress" to "Resolved".
+              Receive notifications as the status changes from Reported to In-Progress to Resolved.
             </p>
           </div>
         </div>
