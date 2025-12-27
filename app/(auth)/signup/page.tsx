@@ -11,7 +11,7 @@ export default function SignupPage() {
       </div>
 
       {/* Right Side - Hero Section */}
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-[#2C27AE] via-[#5B8FB9] to-[#27AE60] relative overflow-hidden">
+      <div className="hidden lg:flex flex-1 bg-linear-to-br from-[#2C27AE] via-[#5B8FB9] to-[#27AE60] relative overflow-hidden">
         
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative w-full h-full flex items-center justify-center">
