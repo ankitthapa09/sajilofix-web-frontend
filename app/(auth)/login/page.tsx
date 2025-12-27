@@ -11,7 +11,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right Side - Hero Section */}
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-[#2C27AE] via-[#5B8FB9] to-[#27AE60] relative overflow-hidden">
+      <div className="hidden lg:flex flex-1 bg-linear-to-br from-[#2C27AE] via-[#5B8FB9] to-[#27AE60] relative overflow-hidden">
         {/* Background Illustration - Character */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative w-full h-full flex items-center justify-center">
@@ -36,7 +36,7 @@ export default function LoginPage() {
             <div className="space-y-6">
               {/* Real-time Tracking */}
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                <div className="shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
                   <svg
                     className="w-6 h-6"
                     fill="none"
@@ -61,7 +61,7 @@ export default function LoginPage() {
 
               {/* Instant Updates */}
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                <div className="shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
                   <svg
                     className="w-6 h-6"
                     fill="none"
@@ -86,7 +86,7 @@ export default function LoginPage() {
 
               {/* Secure & Private */}
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                <div className="shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
                   <svg
                     className="w-6 h-6"
                     fill="none"
