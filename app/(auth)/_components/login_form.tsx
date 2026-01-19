@@ -9,8 +9,26 @@ import { ArrowLeft, Mail, Lock } from "lucide-react";
 import Link from "next/link";
 import logo from "../../../public/logo.png";
 import Image from "next/image";
+import { handleLogin } from "@/lib/actions/auth-action";
 
 type UserType = "citizen" | "admin";
+
+type DerivedRole = "citizen" | "authority" | "admin";
+
+const ROLE_RULES = {
+  adminEmails: ["admin@sajilofix.com"],
+  authorityEmailDomains: ["sajilofix.gov.np"],
+} as const;
+
+function deriveRoleFromEmail(emailRaw: string): DerivedRole {
+  const email = emailRaw.trim().toLowerCase();
+  if (!email.includes("@")) return "citizen";
+
+  if (ROLE_RULES.adminEmails.map((e) => e.toLowerCase()).includes(email)) return "admin";
+  const domain = email.split("@")[1] ?? "";
+  if (ROLE_RULES.authorityEmailDomains.map((d) => d.toLowerCase()).includes(domain)) return "authority";
+  return "citizen";
+}
 
 export default function LoginForm() {
   const router = useRouter();
@@ -21,28 +39,40 @@ export default function LoginForm() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
+
+  const watchedEmail = watch("email") ?? "";
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     setApiError("");
 
     try {
-      // TODO: Replace with actual API call
-      console.log("Login data:", { ...data, userType });
-      
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      
-      // Redirect to dashboard based on user type
-      if (userType === "citizen") {
-      router.push("/citizen");  // ← Goes to citizen dashboard
-    } else {
-      router.push("/admin");     // ← Goes to admin dashboard
-    }
+      const derivedRole = deriveRoleFromEmail(data.email);
+
+      // Keep the UI toggle (citizen/admin), but enforce that the email rules match.
+      if (derivedRole === "authority") {
+        setApiError("Authority accounts must use the authority portal (or contact admin).");
+        return;
+      }
+      if (userType !== derivedRole) {
+        setApiError(
+          `This email is detected as ${derivedRole}. Please switch to ${derivedRole} login.`
+        );
+        return;
+      }
+
+      const result = await handleLogin(data);
+      if (!result.success) {
+        setApiError(result.message || "Login failed");
+        return;
+      }
+
+      router.push(userType === "citizen" ? "/citizen" : "/admin");
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
         setApiError(message || "Login failed. Please try again.");
@@ -103,6 +133,19 @@ export default function LoginForm() {
         >
           Admin
         </button>
+      </div>
+
+      {/* Email-derived role info */}
+      <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <p className="text-sm text-gray-700">
+          Role is derived from your email.
+        </p>
+        <p className="text-sm font-semibold text-gray-900 mt-1">
+          Detected role: {deriveRoleFromEmail(watchedEmail)}
+        </p>
+        <p className="text-xs text-gray-600 mt-1">
+          Admin email: admin@sajilofix.com
+        </p>
       </div>
 
       {/* Error Message */}

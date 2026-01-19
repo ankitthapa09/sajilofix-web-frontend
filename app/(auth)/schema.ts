@@ -14,7 +14,6 @@ export const loginSchema = z.object({
 
 // Signup Step 1 Schema
 export const signupStep1Schema = z.object({
-  role: z.enum(["citizen", "authority"] as const, { message: "Please select a role" }),
   fullName: z
     .string()
     .min(1, "Full name is required")
@@ -24,20 +23,22 @@ export const signupStep1Schema = z.object({
     .string()
     .min(1, "Email is required")
     .email("Please enter a valid email address"),
-  phone: z
+  phoneCountryCode: z
+    .string()
+    .min(1, "Country code is required")
+    .regex(/^\+977$/, "Country code must be +977"),
+  phoneNationalNumber: z
     .string()
     .min(1, "Phone number is required")
-    .regex(/^[0-9]{10}$/, "Phone number must be exactly 10 digits"),
+    .regex(/^\d{10}$/, "Phone number must be exactly 10 digits"),
 });
 
 // Signup Step 2 Schema
 export const signupStep2Schema = z.object({
-  wardNumber: z
-    .string()
-    .min(1, "Ward number is required"),
-  municipality: z
-    .string()
-    .min(1, "Municipality/City is required"),
+  district: z.string().min(1, "District is required").optional(),
+  municipality: z.string().min(1, "Municipality/City is required"),
+  wardNumber: z.string().min(1, "Ward number is required"),
+  tole: z.string().min(1, "Tole is required").optional(),
 });
 
 // Signup Step 3 Schema
