@@ -38,7 +38,11 @@ export default function LoginForm() {
       await new Promise((resolve) => setTimeout(resolve, 1500));
       
       // Redirect to dashboard based on user type
-      router.push("/home");
+      if (userType === "citizen") {
+      router.push("/citizen");  // ← Goes to citizen dashboard
+    } else {
+      router.push("/admin");     // ← Goes to admin dashboard
+    }
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
         setApiError(message || "Login failed. Please try again.");
