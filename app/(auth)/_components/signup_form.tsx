@@ -45,25 +45,24 @@ const DISTRICTS = ["Kathmandu", "Bhaktapur", "Lalitpur"] as const;
 
 const KATHMANDU_MUNICIPALITIES = [
   "Kathmandu Metropolitan City",
-  "Kirtipur",
-  "Tokha",
-  "Budhanilkantha",
-  "Tarakeshwar",
+  "Nagarjun Municipality",
+  "Tokha Municipality",
+  "Budhanilkantha Municipality",
+  "Tarakeshwar Municipality",
 ] as const;
 
 const BHAKTAPUR_MUNICIPALITIES = [
-  "Bhaktapur",
-  "Madhyapur Thimi",
-  "Suryabinayak",
-  "Changunarayan",
+  "Bhaktapur Metropolitan City",
+  "Madhyapur Thimi Municipality",
+  "Suryabinayak Municipality",
+  "Changunarayan Municipality",
 ] as const;
 
 const LALITPUR_MUNICIPALITIES = [
   "Lalitpur Metropolitan City",
-  "Godawari",
-  "Mahalaxmi",
-  "Konjyosom",
-  "Bagmati",
+  "Godawari Municipality",
+  "Mahalaxmi Municipality",
+  "Konjyosom Municipality",
 ] as const;
 
 const MUNICIPALITIES_BY_DISTRICT: Record<string, readonly string[]> = {
