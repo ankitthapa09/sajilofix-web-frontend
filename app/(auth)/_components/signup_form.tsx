@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,7 +12,7 @@ import {
   type SignupStep2Data,
   type SignupStep3Data,
 } from "../schema";
-import { ArrowLeft, ArrowRight, User, Mail, Phone, Lock, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, User, Mail, Phone, Lock, Check, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import logo from "../../../public/logo.png";
@@ -41,28 +41,80 @@ const COUNTRY_CODES = [
   { value: "+977", label: "Nepal (+977)" },
 ] as const;
 
-const DISTRICTS = [
-  "Kathmandu",
-  "Lalitpur",
-  "Bhaktapur",
-  "Chitwan",
-  "Kaski",
-  "Morang",
-  "Sunsari",
-] as const;
+const DISTRICTS = ["Kathmandu", "Bhaktapur", "Lalitpur"] as const;
 
-const MUNICIPALITIES = [
-  "Kathmandu",
-  "Lalitpur",
-  "Bhaktapur",
-  "Bharatpur",
+const KATHMANDU_MUNICIPALITIES = [
+  "Kathmandu Metropolitan City",
+  "Kirtipur",
   "Tokha",
-  "Biratnagar",
-  "Dharan",
-  "Itahari",
+  "Budhanilkantha",
+  "Tarakeshwar",
 ] as const;
 
-const WARD_NUMBERS = Array.from({ length: 32 }, (_, i) => String(i + 1));
+const BHAKTAPUR_MUNICIPALITIES = [
+  "Bhaktapur",
+  "Madhyapur Thimi",
+  "Suryabinayak",
+  "Changunarayan",
+] as const;
+
+const LALITPUR_MUNICIPALITIES = [
+  "Lalitpur Metropolitan City",
+  "Godawari",
+  "Mahalaxmi",
+  "Konjyosom",
+  "Bagmati",
+] as const;
+
+const MUNICIPALITIES_BY_DISTRICT: Record<string, readonly string[]> = {
+  Kathmandu: KATHMANDU_MUNICIPALITIES,
+  Bhaktapur: BHAKTAPUR_MUNICIPALITIES,
+  Lalitpur: LALITPUR_MUNICIPALITIES,
+} as const;
+
+const FALLBACK_MUNICIPALITIES = [
+  "Kathmandu Metropolitan City",
+  "Bhaktapur",
+  "Lalitpur Metropolitan City",
+] as const;
+
+function wardRange(maxInclusive: number) {
+  return Array.from({ length: maxInclusive }, (_, i) => String(i + 1));
+}
+
+const WARD_COUNT_BY_MUNICIPALITY: Record<string, number> = {
+  // Kathmandu
+  "Kathmandu Metropolitan City": 12,
+  Kirtipur: 10,
+  Tokha: 10,
+  Budhanilkantha: 11,
+  Tarakeshwar: 11,
+
+  // Bhaktapur
+  Bhaktapur: 10,
+  "Madhyapur Thimi": 11,
+  Suryabinayak: 12,
+  Changunarayan: 10,
+
+  // Lalitpur
+  "Lalitpur Metropolitan City": 12,
+  Godawari: 11,
+  Mahalaxmi: 10,
+  Konjyosom: 10,
+  Bagmati: 10,
+};
+
+function getMunicipalityOptions(district: string) {
+  if (!district) return FALLBACK_MUNICIPALITIES;
+  return MUNICIPALITIES_BY_DISTRICT[district] ?? FALLBACK_MUNICIPALITIES;
+}
+
+function getWardOptions(_district: string, municipality: string) {
+  if (!municipality) return [] as string[];
+
+  const wardCount = WARD_COUNT_BY_MUNICIPALITY[municipality] ?? 12;
+  return wardRange(Math.min(Math.max(wardCount, 10), 12));
+}
 
 export default function SignupForm() {
   const router = useRouter();
@@ -94,6 +146,29 @@ export default function SignupForm() {
       tole: signupData.tole || "",
     },
   });
+
+  const watchedDistrict = step2Form.watch("district") ?? "";
+  const watchedMunicipality = step2Form.watch("municipality") ?? "";
+  const municipalityOptions = getMunicipalityOptions(watchedDistrict);
+  const wardOptions = getWardOptions(watchedDistrict, watchedMunicipality);
+
+  const prevDistrictRef = useRef<string>(watchedDistrict);
+  const prevMunicipalityRef = useRef<string>(watchedMunicipality);
+
+  useEffect(() => {
+    if (prevDistrictRef.current !== watchedDistrict) {
+      step2Form.setValue("municipality", "", { shouldValidate: true });
+      step2Form.setValue("wardNumber", "", { shouldValidate: true });
+      prevDistrictRef.current = watchedDistrict;
+    }
+  }, [step2Form, watchedDistrict]);
+
+  useEffect(() => {
+    if (prevMunicipalityRef.current !== watchedMunicipality) {
+      step2Form.setValue("wardNumber", "", { shouldValidate: true });
+      prevMunicipalityRef.current = watchedMunicipality;
+    }
+  }, [step2Form, watchedMunicipality]);
 
   // Step 3 form
   const step3Form = useForm<SignupStep3Data>({
@@ -296,28 +371,36 @@ export default function SignupForm() {
             <label htmlFor="phone" className="block text-sm font-medium text-gray-900 mb-2">
               Phone Number
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-3 gap-4">
               <div className="col-span-1">
-                <label className="block text-xs font-medium text-gray-700 mb-1">Country</label>
-                <select
-                  {...step1Form.register("phoneCountryCode")}
-                  className="block w-full px-3 py-3 bg-gray-50 border border-transparent rounded-lg focus:ring-2 focus:ring-green-500 focus:bg-white transition-all"
-                >
-                  {COUNTRY_CODES.map((c) => (
-                    <option key={c.value} value={c.value}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Country code</label>
+                <div className="relative">
+                  <select
+                    {...step1Form.register("phoneCountryCode")}
+                    id="phoneCountryCode"
+                    className="block w-full h-12 appearance-none px-4 pr-10 bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  >
+                    {COUNTRY_CODES.map((c) => (
+                      <option key={c.value} value={c.value}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={18}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                  />
+                </div>
                 {step1Form.formState.errors.phoneCountryCode && (
                   <p className="mt-1 text-xs text-red-600">
                     {step1Form.formState.errors.phoneCountryCode.message}
                   </p>
                 )}
+                <div className="h-4" />
               </div>
 
               <div className="col-span-2">
-                <label className="block text-xs font-medium text-gray-700 mb-1">Number</label>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Phone number</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Phone className="h-5 w-5 text-gray-400" />
@@ -327,7 +410,7 @@ export default function SignupForm() {
                     type="tel"
                     inputMode="numeric"
                     id="phone"
-                    className="block w-full pl-10 pr-3 py-3 bg-gray-50 border border-transparent rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent focus:bg-white transition-all"
+                    className="block w-full h-12 pl-10 pr-4 bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     placeholder="10-digit number"
                   />
                 </div>
@@ -336,6 +419,7 @@ export default function SignupForm() {
                     {step1Form.formState.errors.phoneNationalNumber.message}
                   </p>
                 )}
+                <div className="h-4" />
               </div>
             </div>
           </div>
@@ -353,106 +437,138 @@ export default function SignupForm() {
 
       {/* Step 2: Location */}
       {currentStep === 2 && (
-        <form onSubmit={step2Form.handleSubmit(onStep2Submit)} className="space-y-5">
-          {/* District */}
-          <div>
-            <label htmlFor="district" className="block text-sm font-medium text-gray-900 mb-2">
-              District (optional)
-            </label>
-            <select
-              {...step2Form.register("district")}
-              id="district"
-              className="block w-full px-4 py-3 bg-gray-50 border border-transparent rounded-lg focus:ring-2 focus:ring-green-500 focus:bg-white transition-all"
-              defaultValue={step2Form.getValues("district") || ""}
-            >
-              <option value="">Select district</option>
-              {DISTRICTS.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>
-            {step2Form.formState.errors.district && (
-              <p className="mt-1 text-sm text-red-600">
-                {step2Form.formState.errors.district.message}
-              </p>
-            )}
-          </div>
-
-          {/* Ward Number */}
-          <div>
-            <label htmlFor="wardNumber" className="block text-sm font-medium text-gray-900 mb-2">
-              Ward Number
-            </label>
-            <select
-              {...step2Form.register("wardNumber")}
-              id="wardNumber"
-              className="block w-full px-4 py-3 bg-gray-50 border border-transparent rounded-lg focus:ring-2 focus:ring-green-500 focus:bg-white transition-all"
-              defaultValue={step2Form.getValues("wardNumber") || ""}
-            >
-              <option value="">Select ward</option>
-              {WARD_NUMBERS.map((w) => (
-                <option key={w} value={w}>
-                  {w}
-                </option>
-              ))}
-            </select>
-            {step2Form.formState.errors.wardNumber && (
-              <p className="mt-1 text-sm text-red-600">
-                {step2Form.formState.errors.wardNumber.message}
-              </p>
-            )}
-          </div>
-
-          {/* Municipality */}
-          <div>
-            <label htmlFor="municipality" className="block text-sm font-medium text-gray-900 mb-2">
-              Municipality/City
-            </label>
-            <select
-              {...step2Form.register("municipality")}
-              id="municipality"
-              className="block w-full px-4 py-3 bg-gray-50 border border-transparent rounded-lg focus:ring-2 focus:ring-green-500 focus:bg-white transition-all"
-              defaultValue={step2Form.getValues("municipality") || ""}
-            >
-              <option value="">Select municipality/city</option>
-              {MUNICIPALITIES.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-            {step2Form.formState.errors.municipality && (
-              <p className="mt-1 text-sm text-red-600">
-                {step2Form.formState.errors.municipality.message}
-              </p>
-            )}
-          </div>
-
-          {/* Tole */}
-          <div>
-            <label htmlFor="tole" className="block text-sm font-medium text-gray-900 mb-2">
-              Tole (optional)
-            </label>
-            <input
-              {...step2Form.register("tole")}
-              type="text"
-              id="tole"
-              className="block w-full px-4 py-3 bg-gray-50 border border-transparent rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent focus:bg-white transition-all"
-              placeholder="Your neighborhood / tole"
-            />
-            {step2Form.formState.errors.tole && (
-              <p className="mt-1 text-sm text-red-600">
-                {step2Form.formState.errors.tole.message}
-              </p>
-            )}
-          </div>
-
-          {/* Info Box */}
+        <form onSubmit={step2Form.handleSubmit(onStep2Submit)} className="space-y-6">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-gray-700">
-              This helps us route your reports to the right authorities and show you relevant issues in your area.
+            <p className="text-sm text-gray-800 font-medium">Location details</p>
+            <p className="text-sm text-gray-700 mt-1">
+              We use this to route your reports to the right authorities.
             </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {/* District */}
+            <div>
+              <label htmlFor="district" className="block text-sm font-medium text-gray-900 mb-2">
+                District
+              </label>
+              <div className="relative">
+                <select
+                  {...step2Form.register("district")}
+                  id="district"
+                  className="block w-full h-12 appearance-none px-4 pr-10 bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                >
+                  <option value="">Select district (optional)</option>
+                  {DISTRICTS.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={18}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                />
+              </div>
+              {step2Form.formState.errors.district && (
+                <p className="mt-1 text-sm text-red-600">
+                  {step2Form.formState.errors.district.message}
+                </p>
+              )}
+              <div className="h-5" />
+            </div>
+
+            {/* Municipality */}
+            <div>
+              <label htmlFor="municipality" className="block text-sm font-medium text-gray-900 mb-2">
+                Municipality/City
+              </label>
+              <div className="relative">
+                <select
+                  {...step2Form.register("municipality")}
+                  id="municipality"
+                  disabled={municipalityOptions.length === 0}
+                  className="block w-full h-12 appearance-none px-4 pr-10 bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all disabled:opacity-60"
+                >
+                  <option value="">
+                    {watchedDistrict === "Kathmandu"
+                      ? "Select municipality (Kathmandu)"
+                      : "Select municipality/city"}
+                  </option>
+                  {municipalityOptions.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={18}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                />
+              </div>
+              {step2Form.formState.errors.municipality && (
+                <p className="mt-1 text-sm text-red-600">
+                  {step2Form.formState.errors.municipality.message}
+                </p>
+              )}
+              {watchedDistrict === "Kathmandu" && (
+                <p className="mt-1 text-xs text-gray-600">
+                  Selecting Kathmandu filters municipalities automatically.
+                </p>
+              )}
+              <div className="h-5" />
+            </div>
+
+            {/* Ward Number */}
+            <div>
+              <label htmlFor="wardNumber" className="block text-sm font-medium text-gray-900 mb-2">
+                Ward Number
+              </label>
+              <div className="relative">
+                <select
+                  {...step2Form.register("wardNumber")}
+                  id="wardNumber"
+                  disabled={!watchedMunicipality}
+                  className="block w-full h-12 appearance-none px-4 pr-10 bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all disabled:opacity-60"
+                >
+                  <option value="">{watchedMunicipality ? "Select ward" : "Select municipality first"}</option>
+                  {wardOptions.map((w) => (
+                    <option key={w} value={w}>
+                      {w}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={18}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                />
+              </div>
+              {step2Form.formState.errors.wardNumber && (
+                <p className="mt-1 text-sm text-red-600">
+                  {step2Form.formState.errors.wardNumber.message}
+                </p>
+              )}
+              <div className="h-5" />
+            </div>
+
+            {/* Tole */}
+            <div>
+              <label htmlFor="tole" className="block text-sm font-medium text-gray-900 mb-2">
+                Tole (optional)
+              </label>
+              <input
+                {...step2Form.register("tole")}
+                type="text"
+                id="tole"
+                className="block w-full h-12 px-4 bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                placeholder="e.g., New Baneshwor"
+              />
+              {step2Form.formState.errors.tole && (
+                <p className="mt-1 text-sm text-red-600">
+                  {step2Form.formState.errors.tole.message}
+                </p>
+              )}
+              <div className="h-5" />
+            </div>
           </div>
 
           {/* Buttons */}
@@ -460,14 +576,14 @@ export default function SignupForm() {
             <button
               type="button"
               onClick={handleBack}
-              className="flex-1 flex justify-center items-center gap-2 py-3 px-4 border-2 border-gray-300 rounded-lg text-base font-semibold text-gray-700 hover:bg-gray-50 transition-all"
+              className="flex-1 flex justify-center items-center gap-2 py-3 px-4 border border-gray-300 rounded-lg text-base font-semibold text-gray-700 hover:bg-gray-50 transition-all"
             >
               <ArrowLeft size={20} />
               Back
             </button>
             <button
               type="submit"
-              className="flex-1 flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-blue-500 hover:bg-blue-600 transition-all"
+              className="flex-1 flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-all"
             >
               Continue
               <ArrowRight size={20} />
