@@ -3,12 +3,19 @@
 import { cookies } from "next/headers";
 
 interface UserData {
-  _id: string;
+  id: string;
+  fullName: string;
   email: string;
-  username: string;
   role: string;
-  createdAt: string;
-  updatedAt: string;
+  phone?: string;
+  phoneCountryCode?: string;
+  phoneNationalNumber?: string;
+  wardNumber?: string;
+  municipality?: string;
+  district?: string;
+  tole?: string;
+  dob?: string;
+  citizenshipNumber?: string;
   [key: string]: unknown;
 }
 
