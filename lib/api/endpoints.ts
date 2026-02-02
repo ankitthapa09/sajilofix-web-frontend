@@ -7,4 +7,8 @@ export const API_ENDPOINTS = {
     users: "/api/admin/users",
     authorities: "/api/admin/authorities",
   },
+  users: {
+    me: "/api/users/me",
+    mePhoto: "/api/users/me/photo",
+  },
 } as const;
