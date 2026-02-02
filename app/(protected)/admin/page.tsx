@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BadgeCheck,
   Bell,
@@ -80,68 +80,17 @@ function badgeForStatus(status: Status) {
 
 type TabKey = "all" | "citizens" | "authorities";
 
-const INITIAL_USERS: AdminUserRow[] = [
-  {
-    id: "u_1",
-    fullName: "Ramesh Sharma",
-    email: "ramesh@example.com",
-    role: "citizen",
-    department: "—",
-    status: "active",
-    joinedDate: "2024-01-15",
-    lastActive: "2 hours ago",
-    activity: "12 reports",
-  },
-  {
-    id: "u_2",
-    fullName: "Sita Thapa",
-    email: "sita@example.com",
-    role: "citizen",
-    department: "—",
-    status: "active",
-    joinedDate: "2024-02-20",
-    lastActive: "1 day ago",
-    activity: "5 reports",
-  },
-  {
-    id: "u_3",
-    fullName: "Kathmandu Municipality",
-    email: "admin@ktmmun.gov.np",
-    role: "authority",
-    department: "Public Works",
-    status: "active",
-    joinedDate: "2023-11-10",
-    lastActive: "30 mins ago",
-    activity: "145 resolved",
-  },
-  {
-    id: "u_4",
-    fullName: "Traffic Police",
-    email: "traffic@police.gov.np",
-    role: "authority",
-    department: "Traffic Management",
-    status: "active",
-    joinedDate: "2023-12-01",
-    lastActive: "1 hour ago",
-    activity: "89 resolved",
-  },
-  {
-    id: "u_5",
-    fullName: "Hari Bahadur",
-    email: "hari@example.com",
-    role: "citizen",
-    department: "—",
-    status: "suspended",
-    joinedDate: "2024-03-05",
-    lastActive: "1 week ago",
-    activity: "2 reports",
-  },
-];
+type ListUsersResponse = {
+  success: boolean;
+  data: AdminUserRow[];
+};
 
 type ModalMode = "create" | "edit";
 
 export default function AdminDashboard() {
-  const [users, setUsers] = useState<AdminUserRow[]>(INITIAL_USERS);
+  const [users, setUsers] = useState<AdminUserRow[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [loadError, setLoadError] = useState<string>("");
   const [tab, setTab] = useState<TabKey>("all");
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<Role | "all">("all");
@@ -170,6 +119,31 @@ export default function AdminDashboard() {
   });
 
   const watchedRole = useWatch({ control, name: "role" });
+
+  const loadUsers = useCallback(async () => {
+    setLoadingUsers(true);
+    setLoadError("");
+    try {
+      const resp = await fetch("/api/admin/users", { cache: "no-store" });
+      const json = (await resp.json()) as Partial<ListUsersResponse> & { message?: string };
+
+      if (!resp.ok) {
+        throw new Error(json?.message ?? "Failed to load users");
+      }
+
+      setUsers(Array.isArray(json?.data) ? (json.data as AdminUserRow[]) : []);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setLoadError(msg || "Failed to load users");
+      setUsers([]);
+    } finally {
+      setLoadingUsers(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadUsers();
+  }, [loadUsers]);
 
   const stats = useMemo(() => {
     const totalUsers = users.length;
@@ -429,67 +403,93 @@ export default function AdminDashboard() {
               </thead>
 
               <tbody className="divide-y divide-gray-100">
-                {filteredUsers.map((u) => (
-                  <tr key={u.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
-                          <User className="w-4 h-4" />
-                        </div>
-                        <div className="leading-tight">
-                          <div className="font-semibold text-gray-900">{u.fullName}</div>
-                          <div className="text-gray-500">{u.email}</div>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${badgeForRole(u.role)}`}>
-                        {roleLabel(u.role)}
-                      </span>
-                    </td>
-
-                    <td className="px-4 py-3 text-gray-700">{u.department || "—"}</td>
-
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${badgeForStatus(u.status)}`}>
-                        {u.status === "active" ? "Active" : "Suspended"}
-                      </span>
-                    </td>
-
-                    <td className="px-4 py-3 text-gray-700">{u.joinedDate}</td>
-                    <td className="px-4 py-3 text-gray-700">{u.lastActive}</td>
-                    <td className="px-4 py-3 text-gray-700">{u.activity}</td>
-
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openEdit(u)}
-                          aria-label="Edit"
-                          className="w-9 h-9 rounded-md border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center"
-                        >
-                          <Pencil className="w-4 h-4 text-gray-700" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeUser(u)}
-                          aria-label="Delete"
-                          className="w-9 h-9 rounded-md border border-gray-200 bg-white hover:bg-red-50 flex items-center justify-center"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-600" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-
-                {filteredUsers.length === 0 && (
+                {loadingUsers ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-10 text-center text-gray-500">
-                      No users found.
+                    <td colSpan={8} className="px-4 py-14">
+                      <div className="flex items-center justify-center gap-3 text-gray-600">
+                        <div className="h-5 w-5 rounded-full border-2 border-gray-300 border-t-green-600 animate-spin" />
+                        <span className="text-sm">Loading users...</span>
+                      </div>
                     </td>
                   </tr>
+                ) : loadError ? (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-10 text-center">
+                      <div className="text-sm text-red-600">{loadError}</div>
+                      <button
+                        type="button"
+                        onClick={() => void loadUsers()}
+                        className="mt-3 inline-flex items-center justify-center h-9 px-4 rounded-md border border-gray-200 bg-white hover:bg-gray-50 text-sm font-semibold text-gray-800"
+                      >
+                        Retry
+                      </button>
+                    </td>
+                  </tr>
+                ) : (
+                  <>
+                    {filteredUsers.map((u) => (
+                      <tr key={u.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                              <User className="w-4 h-4" />
+                            </div>
+                            <div className="leading-tight">
+                              <div className="font-semibold text-gray-900">{u.fullName}</div>
+                              <div className="text-gray-500">{u.email}</div>
+                            </div>
+                          </div>
+                        </td>
+
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${badgeForRole(u.role)}`}>
+                            {roleLabel(u.role)}
+                          </span>
+                        </td>
+
+                        <td className="px-4 py-3 text-gray-700">{u.department || "—"}</td>
+
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold ${badgeForStatus(u.status)}`}>
+                            {u.status === "active" ? "Active" : "Suspended"}
+                          </span>
+                        </td>
+
+                        <td className="px-4 py-3 text-gray-700">{u.joinedDate}</td>
+                        <td className="px-4 py-3 text-gray-700">{u.lastActive}</td>
+                        <td className="px-4 py-3 text-gray-700">{u.activity}</td>
+
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => openEdit(u)}
+                              aria-label="Edit"
+                              className="w-9 h-9 rounded-md border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center"
+                            >
+                              <Pencil className="w-4 h-4 text-gray-700" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => removeUser(u)}
+                              aria-label="Delete"
+                              className="w-9 h-9 rounded-md border border-gray-200 bg-white hover:bg-red-50 flex items-center justify-center"
+                            >
+                              <Trash2 className="w-4 h-4 text-red-600" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+
+                    {filteredUsers.length === 0 && (
+                      <tr>
+                        <td colSpan={8} className="px-4 py-10 text-center text-gray-500">
+                          No users found.
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 )}
               </tbody>
             </table>
