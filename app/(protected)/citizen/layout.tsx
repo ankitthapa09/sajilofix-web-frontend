@@ -1,10 +1,17 @@
-
 import React from "react";
+import { redirect } from "next/navigation";
 import CitizenSidebar from "../../../features/citizen/components/CitizenSidebar";
+import { getUserData } from "@/lib/cookie";
 
-export default function CitizenLayout({
+export default async function CitizenLayout({
 	children,
 }: Readonly<{ children: React.ReactNode }>) {
+	const user = await getUserData();
+	if (!user) redirect("/login");
+	if (user.role === "admin") redirect("/admin");
+	if (user.role === "authority") redirect("/authority");
+	if (user.role !== "citizen") redirect("/login");
+
 	return (
 		<div className="min-h-screen bg-gray-50">
 			<div className="flex">

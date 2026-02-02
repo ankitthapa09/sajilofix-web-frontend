@@ -10,7 +10,9 @@ export default async function AdminLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const user = await getUserData();
   if (!user) redirect("/admin/login");
-  if (user.role !== "admin") redirect("/citizen");
+  if (user.role === "authority") redirect("/authority");
+  if (user.role === "citizen") redirect("/citizen");
+  if (user.role !== "admin") redirect("/admin/login");
 
   return (
     <div className="min-h-screen bg-gray-50">

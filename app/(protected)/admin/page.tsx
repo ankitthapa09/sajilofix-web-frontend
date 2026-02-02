@@ -21,6 +21,7 @@ import {
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
+import { adminCreateAuthority, adminListUsers } from "@/lib/api/admin";
 
 type Role = "admin" | "authority" | "citizen";
 type Status = "active" | "suspended";
@@ -39,19 +40,68 @@ type AdminUserRow = {
 
 const userFormSchema = z
   .object({
+    formMode: z.enum(["create", "edit"]),
     fullName: z.string().min(2, "Enter full name"),
     email: z.string().email("Enter a valid email"),
     role: z.enum(["admin", "authority", "citizen"]),
     department: z.string().optional(),
     status: z.enum(["active", "suspended"]),
+
+    // Required when creating authority accounts
+    phone: z.string().optional(),
+    wardNumber: z.string().optional(),
+    municipality: z.string().optional(),
+    password: z.string().optional(),
   })
   .superRefine((val, ctx) => {
-    if (val.role === "authority" && !val.department?.trim()) {
+    const isAuthority = val.role === "authority";
+    const isCreate = val.formMode === "create";
+
+    if (isAuthority && !val.department?.trim()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["department"],
         message: "Department is required for authority accounts",
       });
+    }
+
+    if (isAuthority && isCreate) {
+      const phone = (val.phone ?? "").trim();
+      const ward = (val.wardNumber ?? "").trim();
+      const municipality = (val.municipality ?? "").trim();
+      const password = val.password ?? "";
+
+      if (!/^(?:\d{10}|\+977\d{10})$/.test(phone)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["phone"],
+          message: "Phone must be 10 digits or +977 followed by 10 digits",
+        });
+      }
+
+      if (!ward) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["wardNumber"],
+          message: "Ward number is required",
+        });
+      }
+
+      if (!municipality) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["municipality"],
+          message: "Municipality is required",
+        });
+      }
+
+      if (password.length < 8) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["password"],
+          message: "Password must be at least 8 characters",
+        });
+      }
     }
   });
 
@@ -99,6 +149,7 @@ export default function AdminDashboard() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<ModalMode>("create");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [modalApiError, setModalApiError] = useState<string>("");
 
   const {
     register,
@@ -109,11 +160,16 @@ export default function AdminDashboard() {
   } = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
     defaultValues: {
+      formMode: "create",
       fullName: "",
       email: "",
       role: "authority",
       department: "",
       status: "active",
+      phone: "",
+      wardNumber: "",
+      municipality: "",
+      password: "",
     },
     mode: "onSubmit",
   });
@@ -124,13 +180,7 @@ export default function AdminDashboard() {
     setLoadingUsers(true);
     setLoadError("");
     try {
-      const resp = await fetch("/api/admin/users", { cache: "no-store" });
-      const json = (await resp.json()) as Partial<ListUsersResponse> & { message?: string };
-
-      if (!resp.ok) {
-        throw new Error(json?.message ?? "Failed to load users");
-      }
-
+      const json = await adminListUsers();
       setUsers(Array.isArray(json?.data) ? (json.data as AdminUserRow[]) : []);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -180,12 +230,18 @@ export default function AdminDashboard() {
   const openCreate = () => {
     setModalMode("create");
     setEditingId(null);
+    setModalApiError("");
     reset({
+      formMode: "create",
       fullName: "",
       email: "",
       role: "authority",
       department: "",
       status: "active",
+      phone: "",
+      wardNumber: "",
+      municipality: "",
+      password: "",
     });
     setModalOpen(true);
   };
@@ -193,12 +249,18 @@ export default function AdminDashboard() {
   const openEdit = (row: AdminUserRow) => {
     setModalMode("edit");
     setEditingId(row.id);
+    setModalApiError("");
     reset({
+      formMode: "edit",
       fullName: row.fullName,
       email: row.email,
       role: row.role,
       department: row.department === "—" ? "" : (row.department ?? ""),
       status: row.status,
+      phone: "",
+      wardNumber: "",
+      municipality: "",
+      password: "",
     });
     setModalOpen(true);
   };
@@ -208,6 +270,33 @@ export default function AdminDashboard() {
   };
 
   const submit = async (values: UserFormValues) => {
+    setModalApiError("");
+
+    // Real API-backed creation for Authority accounts
+    if (modalMode === "create" && values.role === "authority") {
+      try {
+        await adminCreateAuthority({
+          fullName: values.fullName,
+          email: values.email,
+          password: values.password ?? "",
+          phone: values.phone ?? "",
+          wardNumber: values.wardNumber ?? "",
+          municipality: values.municipality ?? "",
+          department: values.department,
+          status: values.status,
+        });
+
+        setModalOpen(false);
+        setTab("authorities");
+        await loadUsers();
+        return;
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        setModalApiError(msg || "Failed to create authority account");
+        return;
+      }
+    }
+
     const department = values.role === "authority" ? values.department?.trim() : "";
     const normalized: AdminUserRow = {
       id: editingId ?? `u_${uid()}`,
@@ -534,6 +623,11 @@ export default function AdminDashboard() {
               </div>
 
               <form onSubmit={handleSubmit(submit)} className="p-6 space-y-4">
+                {modalApiError && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    {modalApiError}
+                  </div>
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-sm font-medium text-gray-900" htmlFor="fullName">
@@ -624,6 +718,71 @@ export default function AdminDashboard() {
                     <p className="text-xs text-red-600">{errors.department.message}</p>
                   )}
                 </div>
+
+                {modalMode === "create" && watchedRole === "authority" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-gray-900" htmlFor="phone">
+                        Phone <span className="text-red-600">*</span>
+                      </label>
+                      <input
+                        id="phone"
+                        className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:bg-white focus:ring-2 focus:ring-green-200"
+                        {...register("phone")}
+                        placeholder="9800000000 or +9779800000000"
+                      />
+                      {errors.phone?.message && (
+                        <p className="text-xs text-red-600">{errors.phone.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-gray-900" htmlFor="password">
+                        Password <span className="text-red-600">*</span>
+                      </label>
+                      <input
+                        id="password"
+                        type="password"
+                        className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:bg-white focus:ring-2 focus:ring-green-200"
+                        {...register("password")}
+                        placeholder="At least 8 characters"
+                      />
+                      {errors.password?.message && (
+                        <p className="text-xs text-red-600">{errors.password.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-gray-900" htmlFor="wardNumber">
+                        Ward Number <span className="text-red-600">*</span>
+                      </label>
+                      <input
+                        id="wardNumber"
+                        className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:bg-white focus:ring-2 focus:ring-green-200"
+                        {...register("wardNumber")}
+                        placeholder="e.g. 5"
+                      />
+                      {errors.wardNumber?.message && (
+                        <p className="text-xs text-red-600">{errors.wardNumber.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-sm font-medium text-gray-900" htmlFor="municipality">
+                        Municipality <span className="text-red-600">*</span>
+                      </label>
+                      <input
+                        id="municipality"
+                        className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:bg-white focus:ring-2 focus:ring-green-200"
+                        {...register("municipality")}
+                        placeholder="e.g. Kathmandu"
+                      />
+                      {errors.municipality?.message && (
+                        <p className="text-xs text-red-600">{errors.municipality.message}</p>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <div className="pt-2 flex items-center justify-end gap-3">
                   <button
