@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { usersGetMe, usersUpdateMyPhoto } from "@/lib/api/users";
+import { toast } from "sonner";
 
 type UserData = {
   id?: string;
@@ -116,6 +117,7 @@ export default function ProfileForm({ user }: { user?: UserData | null }) {
 
     if (!selectedFile) {
       setSaveError("Please choose a profile photo to upload.");
+      toast.error("Please choose a profile photo to upload.");
       return;
     }
 
@@ -126,8 +128,11 @@ export default function ProfileForm({ user }: { user?: UserData | null }) {
       setSelectedFile(null);
       setPreviewUrl("");
       setSaveSuccess("Profile photo updated.");
+      toast.success("Profile photo updated");
     } catch (err: unknown) {
-      setSaveError(err instanceof Error ? err.message : "Failed to upload photo");
+      const msg = err instanceof Error ? err.message : "Failed to upload photo";
+      setSaveError(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }

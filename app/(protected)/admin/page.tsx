@@ -32,6 +32,7 @@ import {
   adminUpdateAuthority,
   adminUpdateCitizen,
 } from "@/lib/api/admin";
+import { toast } from "sonner";
 
 type Role = "admin" | "authority" | "citizen";
 type Status = "active" | "suspended";
@@ -291,7 +292,7 @@ export default function AdminDashboard() {
 
   const openEdit = async (row: AdminUserRow) => {
     if (row.role === "admin") {
-      window.alert("Admin accounts cannot be edited from this screen.");
+      toast.info("Admin accounts cannot be edited from this screen.");
       return;
     }
 
@@ -362,6 +363,7 @@ export default function AdminDashboard() {
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       setModalApiError(msg || "Failed to load user details");
+      toast.error(msg || "Failed to load user details");
     } finally {
       setModalLoading(false);
     }
@@ -405,10 +407,12 @@ export default function AdminDashboard() {
         setModalOpen(false);
         setTab("authorities");
         await loadUsers();
+        toast.success("Authority account created");
         return;
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
         setModalApiError(msg || "Failed to create authority account");
+        toast.error(msg || "Failed to create authority account");
         return;
       }
     }
@@ -432,10 +436,12 @@ export default function AdminDashboard() {
         setModalOpen(false);
         setTab("citizens");
         await loadUsers();
+        toast.success("Citizen account created");
         return;
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
         setModalApiError(msg || "Failed to create citizen account");
+        toast.error(msg || "Failed to create citizen account");
         return;
       }
     }
@@ -478,10 +484,12 @@ export default function AdminDashboard() {
 
         setModalOpen(false);
         await loadUsers();
+        toast.success("User updated");
         return;
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : String(e);
         setModalApiError(msg || "Failed to update user");
+        toast.error(msg || "Failed to update user");
         return;
       }
     }
@@ -491,7 +499,7 @@ export default function AdminDashboard() {
 
   const removeUser = async (row: AdminUserRow) => {
     if (row.role === "admin") {
-      window.alert("Admin accounts cannot be deleted from this screen.");
+      toast.info("Admin accounts cannot be deleted from this screen.");
       return;
     }
 
@@ -502,9 +510,10 @@ export default function AdminDashboard() {
       if (row.role === "authority") await adminDeleteAuthority(row.id);
       if (row.role === "citizen") await adminDeleteCitizen(row.id);
       await loadUsers();
+      toast.success("User deleted");
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
-      window.alert(msg || "Failed to delete user");
+      toast.error(msg || "Failed to delete user");
     }
   };
 

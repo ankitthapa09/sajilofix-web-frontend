@@ -17,6 +17,8 @@ import Link from "next/link";
 import Image from "next/image";
 import logo from "../../../public/logo.png";
 import { handleRegister } from "@/lib/actions/auth-action";
+import { toast } from "sonner";
+import { setFlashToast } from "@/lib/toast/flash";
 
 type SignupData = SignupStep1Data & SignupStep2Data & SignupStep3Data;
 
@@ -183,11 +185,12 @@ export default function SignupForm() {
     setApiError("");
     const derivedRole = deriveRoleFromEmail(data.email);
     if (derivedRole !== "citizen") {
-      setApiError(
+      const msg =
         derivedRole === "authority"
           ? "Authority accounts cannot self-register. Please contact an admin."
-          : "Admin accounts cannot self-register from here."
-      );
+          : "Admin accounts cannot self-register from here.";
+      setApiError(msg);
+      toast.error(msg);
       return;
     }
     setSignupData({ ...signupData, ...data });
@@ -208,20 +211,27 @@ export default function SignupForm() {
     try {
       const derivedRole = deriveRoleFromEmail(String(finalData.email ?? ""));
       if (derivedRole !== "citizen") {
-        setApiError("Only citizens can self-register. Authority accounts are created by admin.");
+        const msg = "Only citizens can self-register. Authority accounts are created by admin.";
+        setApiError(msg);
+        toast.error(msg);
         return;
       }
 
       const result = await handleRegister(finalData as SignupData);
       if (!result.success) {
-        setApiError(result.message || "Registration failed");
+        const msg = result.message || "Registration failed";
+        setApiError(msg);
+        toast.error(msg);
         return;
       }
 
+      setFlashToast({ type: "success", message: "Account created. Please log in." });
       router.push("/login");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      setApiError(message || "Registration failed");
+      const msg = message || "Registration failed";
+      setApiError(msg);
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }

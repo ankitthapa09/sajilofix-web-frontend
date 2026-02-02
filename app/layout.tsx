@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Poppins } from "next/font/google";
+import { Toaster } from "sonner";
 import "./globals.css";
+import { FlashToast } from "@/components/FlashToast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,8 +36,25 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} antialiased min-h-screen bg-gradient-to-b from-blue-100 to-white`}
+        className={`${geistSans.variable} ${geistMono.variable} ${poppins.variable} antialiased min-h-screen bg-linear-to-b from-blue-100 to-white`}
       >
+        <Toaster
+          position="top-right"
+          richColors
+          closeButton
+          expand
+          toastOptions={{
+            duration: 3500,
+            className: "sajilofix-toast",
+            style: {
+              padding: "14px 16px",
+              fontSize: "15px",
+              borderRadius: "14px",
+              minWidth: "340px",
+            },
+          }}
+        />
+        <FlashToast />
         {children}
       </body>
     </html>

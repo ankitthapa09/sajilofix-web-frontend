@@ -10,6 +10,8 @@ import Link from "next/link";
 import logo from "../../../public/logo.png";
 import Image from "next/image";
 import { handleLogin } from "@/lib/actions/auth-action";
+import { toast } from "sonner";
+import { setFlashToast } from "@/lib/toast/flash";
 
 type DerivedRole = "citizen" | "authority" | "admin";
 
@@ -57,27 +59,39 @@ export default function LoginForm({ mode = "user" }: Props) {
 
       // Optional portal restrictions. Core behavior is always email-derived.
       if (mode === "admin" && derivedRole !== "admin") {
-        setApiError("This email is not detected as admin.");
+        const msg = "This email is not detected as admin.";
+        setApiError(msg);
+        toast.error(msg);
         return;
       }
       if (mode === "authority" && derivedRole !== "authority") {
-        setApiError("This email is not detected as authority.");
+        const msg = "This email is not detected as authority.";
+        setApiError(msg);
+        toast.error(msg);
         return;
       }
       if (mode === "citizen" && derivedRole !== "citizen") {
-        setApiError("This email is not detected as citizen.");
+        const msg = "This email is not detected as citizen.";
+        setApiError(msg);
+        toast.error(msg);
         return;
       }
       if (mode === "user" && derivedRole === "admin") {
-        setApiError("Admin accounts must use the admin portal.");
+        const msg = "Admin accounts must use the admin portal.";
+        setApiError(msg);
+        toast.error(msg);
         return;
       }
 
       const result = await handleLogin(data);
       if (!result.success) {
-        setApiError(result.message || "Login failed");
+        const msg = result.message || "Login failed";
+        setApiError(msg);
+        toast.error(msg);
         return;
       }
+
+      setFlashToast({ type: "success", message: "Logged in successfully" });
 
       router.push(
         derivedRole === "admin"
@@ -88,7 +102,9 @@ export default function LoginForm({ mode = "user" }: Props) {
       );
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
-        setApiError(message || "Login failed. Please try again.");
+        const msg = message || "Login failed. Please try again.";
+        setApiError(msg);
+        toast.error(msg);
       } finally {
       setIsLoading(false);
     }
