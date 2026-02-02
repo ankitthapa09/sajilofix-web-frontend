@@ -6,6 +6,7 @@ export const API_ENDPOINTS = {
   admin: {
     users: "/api/admin/users",
     authorities: "/api/admin/authorities",
+    citizens: "/api/admin/citizens",
   },
   users: {
     me: "/api/users/me",
