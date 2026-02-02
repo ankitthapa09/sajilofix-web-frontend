@@ -11,8 +11,6 @@ import logo from "../../../public/logo.png";
 import Image from "next/image";
 import { handleLogin } from "@/lib/actions/auth-action";
 
-type UserType = "citizen" | "admin";
-
 type DerivedRole = "citizen" | "authority" | "admin";
 
 const ROLE_RULES = {
@@ -30,22 +28,25 @@ function deriveRoleFromEmail(emailRaw: string): DerivedRole {
   return "citizen";
 }
 
-export default function LoginForm() {
+type LoginMode = "user" | "citizen" | "authority" | "admin";
+
+type Props = {
+  mode?: LoginMode;
+};
+
+export default function LoginForm({ mode = "user" }: Props) {
   const router = useRouter();
-  const [userType, setUserType] = useState<UserType>("citizen");
+  
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState("");
 
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
-
-  const watchedEmail = watch("email") ?? "";
 
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
@@ -54,15 +55,21 @@ export default function LoginForm() {
     try {
       const derivedRole = deriveRoleFromEmail(data.email);
 
-      // Keep the UI toggle (citizen/admin), but enforce that the email rules match.
-      if (derivedRole === "authority") {
-        setApiError("Authority accounts must use the authority portal (or contact admin).");
+      // Optional portal restrictions. Core behavior is always email-derived.
+      if (mode === "admin" && derivedRole !== "admin") {
+        setApiError("This email is not detected as admin.");
         return;
       }
-      if (userType !== derivedRole) {
-        setApiError(
-          `This email is detected as ${derivedRole}. Please switch to ${derivedRole} login.`
-        );
+      if (mode === "authority" && derivedRole !== "authority") {
+        setApiError("This email is not detected as authority.");
+        return;
+      }
+      if (mode === "citizen" && derivedRole !== "citizen") {
+        setApiError("This email is not detected as citizen.");
+        return;
+      }
+      if (mode === "user" && derivedRole === "admin") {
+        setApiError("Admin accounts must use the admin portal.");
         return;
       }
 
@@ -72,7 +79,13 @@ export default function LoginForm() {
         return;
       }
 
-      router.push(userType === "citizen" ? "/citizen" : "/admin");
+      router.push(
+        derivedRole === "admin"
+          ? "/admin"
+          : derivedRole === "authority"
+            ? "/authority"
+            : "/citizen",
+      );
     } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
         setApiError(message || "Login failed. Please try again.");
@@ -109,44 +122,13 @@ export default function LoginForm() {
         <p className="text-gray-600">Sign in to continue making a difference</p>
       </div>
 
-      {/* User Type Toggle */}
-      <div className="flex gap-3 mb-6">
-        <button
-          type="button"
-          onClick={() => setUserType("citizen")}
-          className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
-            userType === "citizen"
-              ? "bg-blue-500 text-white shadow-md"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
-        >
-          Citizen
-        </button>
-        <button
-          type="button"
-          onClick={() => setUserType("admin")}
-          className={`flex-1 py-3 px-4 rounded-lg font-medium transition-all ${
-            userType === "admin"
-              ? "bg-blue-500 text-white shadow-md"
-              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
-        >
-          Admin
-        </button>
-      </div>
-
-      {/* Email-derived role info */}
-      <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <p className="text-sm text-gray-700">
-          Role is derived from your email.
-        </p>
-        <p className="text-sm font-semibold text-gray-900 mt-1">
-          Detected role: {deriveRoleFromEmail(watchedEmail)}
-        </p>
-        <p className="text-xs text-gray-600 mt-1">
-          Admin email: admin@sajilofix.com
-        </p>
-      </div>
+      {mode === "user" && (
+        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p className="text-sm text-gray-700">
+            Citizen and Authority can login here. Admin uses the Admin portal.
+          </p>
+        </div>
+      )}
 
       {/* Error Message */}
       {apiError && (

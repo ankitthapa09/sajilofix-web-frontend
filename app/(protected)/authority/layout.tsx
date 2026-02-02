@@ -5,12 +5,14 @@ import { Bell, LogOut, Settings, Shield } from "lucide-react";
 import { getUserData } from "@/lib/cookie";
 import { handleLogout } from "@/lib/actions/auth-action";
 
-export default async function AdminLayout({
+export default async function AuthorityLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const user = await getUserData();
-  if (!user) redirect("/admin/login");
-  if (user.role !== "admin") redirect("/citizen");
+  if (!user) redirect("/login");
+
+  if (user.role === "admin") redirect("/admin");
+  if (user.role !== "authority") redirect("/citizen");
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -21,8 +23,12 @@ export default async function AdminLayout({
               <Shield className="w-5 h-5" />
             </div>
             <div className="leading-tight">
-              <div className="text-lg font-semibold text-gray-900">Admin Dashboard</div>
-              <div className="text-sm text-gray-500">Manage users and system</div>
+              <div className="text-lg font-semibold text-gray-900">
+                Authority Dashboard
+              </div>
+              <div className="text-sm text-gray-500">
+                Manage assigned reports
+              </div>
             </div>
           </div>
 
