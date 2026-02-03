@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { usersGetMe, usersUpdateMyPhoto } from "@/lib/api/users";
+import { usersGetMe, usersUpdateMe, usersUpdateMyPhoto } from "@/lib/api/users";
 import { toast } from "sonner";
 
 type UserData = {
@@ -38,6 +38,7 @@ function toPhotoUrl(profilePhoto: string | undefined) {
 
 export default function ProfileForm({ user }: { user?: UserData | null }) {
   const [currentUser, setCurrentUser] = useState<UserData | null | undefined>(user);
+  const [hydrated, setHydrated] = useState(false);
 
   const [firstName, setFirstName] = useState(() => {
     if (!currentUser?.fullName) return "";
@@ -70,9 +71,33 @@ export default function ProfileForm({ user }: { user?: UserData | null }) {
         setCurrentUser(me.user);
       } catch {
         // ignore
+      } finally {
+        setHydrated(true);
       }
     })();
   }, []);
+
+  React.useEffect(() => {
+    if (!currentUser || hydrated) return;
+    // If the server passed initial user data, treat it as hydrated.
+    setHydrated(true);
+  }, [currentUser, hydrated]);
+
+  React.useEffect(() => {
+    if (!currentUser) return;
+
+    const fullName = String(currentUser.fullName ?? "").trim();
+    const parts = fullName.split(/\s+/).filter(Boolean);
+    setFirstName(parts[0] ?? "");
+    setLastName(parts.slice(1).join(" ") ?? "");
+    setEmail(String(currentUser.email ?? ""));
+    setPhone(String(currentUser.phone ?? ""));
+    setAddress(
+      String(currentUser.tole || currentUser.municipality || currentUser.district || "")
+    );
+    setDob(String(currentUser.dob ?? ""));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.id]);
 
   const onPickFile: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     setSaveError("");
@@ -108,6 +133,15 @@ export default function ProfileForm({ user }: { user?: UserData | null }) {
     setSaveSuccess("");
     setSelectedFile(null);
     setPreviewUrl("");
+
+    const fullName = String(currentUser?.fullName ?? "").trim();
+    const parts = fullName.split(/\s+/).filter(Boolean);
+    setFirstName(parts[0] ?? "");
+    setLastName(parts.slice(1).join(" ") ?? "");
+    setEmail(String(currentUser?.email ?? ""));
+    setPhone(String(currentUser?.phone ?? ""));
+    setAddress(String(currentUser?.tole || currentUser?.municipality || currentUser?.district || ""));
+    setDob(String(currentUser?.dob ?? ""));
   };
 
   const onSave: React.FormEventHandler<HTMLFormElement> = async (e) => {
@@ -115,22 +149,31 @@ export default function ProfileForm({ user }: { user?: UserData | null }) {
     setSaveError("");
     setSaveSuccess("");
 
-    if (!selectedFile) {
-      setSaveError("Please choose a profile photo to upload.");
-      toast.error("Please choose a profile photo to upload.");
-      return;
-    }
-
     setSaving(true);
     try {
-      const resp = await usersUpdateMyPhoto(selectedFile);
-      setCurrentUser(resp.user);
-      setSelectedFile(null);
-      setPreviewUrl("");
-      setSaveSuccess("Profile photo updated.");
-      toast.success("Profile photo updated");
+      const fullName = `${firstName} ${lastName}`.trim().replace(/\s+/g, " ");
+
+      // Save profile info
+      const updateResp = await usersUpdateMe({
+        fullName: fullName || undefined,
+        phone: phone.trim() || undefined,
+        tole: address.trim() || undefined,
+        dob: dob || undefined,
+      });
+      setCurrentUser(updateResp.user);
+
+      // Upload photo if selected
+      if (selectedFile) {
+        const photoResp = await usersUpdateMyPhoto(selectedFile);
+        setCurrentUser(photoResp.user);
+        setSelectedFile(null);
+        setPreviewUrl("");
+      }
+
+      setSaveSuccess("Profile updated.");
+      toast.success("Profile updated");
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to upload photo";
+      const msg = err instanceof Error ? err.message : "Failed to update profile";
       setSaveError(msg);
       toast.error(msg);
     } finally {
@@ -197,7 +240,7 @@ export default function ProfileForm({ user }: { user?: UserData | null }) {
             </div>
             <div className="md:col-span-2">
               <label className="text-xs text-gray-600">Email Address</label>
-              <input value={email} onChange={(e) => setEmail(e.target.value)} className="w-full mt-1 px-3 py-2 bg-gray-50 rounded-md border border-gray-200" />
+              <input value={email} disabled className="w-full mt-1 px-3 py-2 bg-gray-50 rounded-md border border-gray-200 text-gray-500" />
             </div>
             <div className="md:col-span-2">
               <label className="text-xs text-gray-600">Phone Number</label>

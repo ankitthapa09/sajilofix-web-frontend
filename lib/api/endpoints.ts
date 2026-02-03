@@ -10,6 +10,7 @@ export const API_ENDPOINTS = {
   },
   users: {
     me: "/api/users/me",
+    meUpdate: "/api/users/me",
     mePhoto: "/api/users/me/photo",
   },
 } as const;

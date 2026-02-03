@@ -8,8 +8,14 @@ type MeUser = {
   fullName: string;
   email: string;
   phone?: string;
+  phoneCountryCode?: string;
+  phoneNationalNumber?: string;
   wardNumber?: string;
   municipality?: string;
+  district?: string;
+  tole?: string;
+  dob?: string;
+  citizenshipNumber?: string;
   profilePhoto?: string;
   role: Role;
 };
@@ -47,5 +53,28 @@ export async function usersUpdateMyPhoto(file: File): Promise<GetMeResponse> {
     return resp.data as GetMeResponse;
   } catch (error: unknown) {
     throw new Error(unwrapError(error, "Failed to upload photo"));
+  }
+}
+
+export type UsersUpdateMeInput = {
+  fullName?: string;
+  phone?: string;
+  phoneCountryCode?: string;
+  phoneNationalNumber?: string;
+  wardNumber?: string;
+  ward?: string;
+  municipality?: string;
+  district?: string;
+  tole?: string;
+  dob?: string;
+  citizenshipNumber?: string;
+};
+
+export async function usersUpdateMe(input: UsersUpdateMeInput): Promise<GetMeResponse> {
+  try {
+    const resp = await apiClient.patch(API_ENDPOINTS.users.meUpdate, input);
+    return resp.data as GetMeResponse;
+  } catch (error: unknown) {
+    throw new Error(unwrapError(error, "Failed to update profile"));
   }
 }
