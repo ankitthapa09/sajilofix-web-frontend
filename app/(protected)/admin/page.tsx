@@ -17,6 +17,10 @@ import {
   UserX,
   Users,
   X,
+  AlertCircle,
+  ArrowRight,
+  CircleDot,
+  TrendingUp,
 } from "lucide-react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -42,12 +46,46 @@ type AdminUserRow = {
   fullName: string;
   email: string;
   role: Role;
+  profilePhoto?: string;
   department?: string;
   status: Status;
   joinedDate: string; // YYYY-MM-DD
   lastActive: string;
   activity: string;
 };
+
+function resolveProfilePhotoUrl(profilePhoto?: string) {
+  const v = (profilePhoto ?? "").trim();
+  if (!v) return "";
+  if (/^https?:\/\//i.test(v)) return v;
+
+  const base = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000").replace(/\/$/, "");
+  const path = v.startsWith("/") ? v : `/${v}`;
+  return `${base}${path}`;
+}
+
+function initialsFromName(name: string) {
+  const n = (name ?? "").trim();
+  if (!n) return "U";
+  const parts = n.split(/\s+/).filter(Boolean);
+  const a = parts[0]?.[0] ?? "U";
+  const b = parts.length > 1 ? parts[parts.length - 1]?.[0] ?? "" : "";
+  return (a + b).toUpperCase();
+}
+
+type IssueStatus = "pending" | "in-progress" | "resolved";
+type RecentIssue = {
+  id: string;
+  title: string;
+  location: string;
+  status: IssueStatus;
+};
+
+function issueBadge(status: IssueStatus) {
+  if (status === "pending") return "bg-orange-100 text-orange-700";
+  if (status === "in-progress") return "bg-blue-100 text-blue-700";
+  return "bg-emerald-100 text-emerald-700";
+}
 
 const userFormSchema = z
   .object({
@@ -240,6 +278,31 @@ export default function AdminDashboard() {
     return { totalUsers, citizens, authorities, active, suspended };
   }, [users]);
 
+  const recentUsers = useMemo(() => {
+    return [...users]
+      .filter((u) => u.role !== "admin")
+      .sort((a, b) => (a.joinedDate < b.joinedDate ? 1 : -1))
+      .slice(0, 5);
+  }, [users]);
+
+  const recentIssues = useMemo<RecentIssue[]>(() => {
+    // Placeholder until issue APIs are connected.
+    return [
+      { id: "i1", title: "Broken Street Light", location: "Thamel, Ward 26", status: "pending" },
+      { id: "i2", title: "Pothole on Main Road", location: "New Baneshwor", status: "in-progress" },
+      { id: "i3", title: "Garbage Overflow", location: "Lazimpat", status: "resolved" },
+    ];
+  }, []);
+
+  const issueStats = useMemo(() => {
+    const total = recentIssues.length;
+    const pending = recentIssues.filter((i) => i.status === "pending").length;
+    const urgent = pending;
+    const resolved = recentIssues.filter((i) => i.status === "resolved").length;
+    const inProgress = recentIssues.filter((i) => i.status === "in-progress").length;
+    return { total, pending, urgent, resolved, inProgress };
+  }, [recentIssues]);
+
   const filteredUsers = useMemo(() => {
     const q = search.trim().toLowerCase();
 
@@ -287,8 +350,7 @@ export default function AdminDashboard() {
     setModalOpen(true);
   };
 
-  const openCreateAuthority = () => openCreate("authority");
-  const openCreateCitizen = () => openCreate("citizen");
+  const openCreateUser = () => openCreate("authority");
 
   const openEdit = async (row: AdminUserRow) => {
     if (row.role === "admin") {
@@ -519,107 +581,176 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Summary cards */}
+      {/* Top stat cards (like screenshot) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <SummaryCard
+        <TopStatCard
           title="Total Users"
           value={stats.totalUsers}
-          accent="border-l-green-500"
-          icon={
-            <div className="w-10 h-10 rounded-lg bg-green-50 text-green-600 flex items-center justify-center">
-              <Users className="w-5 h-5" />
-            </div>
+          subtitle={
+            <span className="inline-flex items-center gap-1.5">
+              <TrendingUp className="w-4 h-4" />
+              +12% from last month
+            </span>
           }
+          tone="green"
+          icon={<Users className="w-5 h-5" />}
         />
-        <SummaryCard
-          title="Citizens"
-          value={stats.citizens}
-          accent="border-l-blue-500"
-          icon={
-            <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-              <UserCheck className="w-5 h-5" />
-            </div>
+        <TopStatCard
+          title="Total Issues"
+          value={issueStats.total}
+          subtitle={
+            <span className="inline-flex items-center gap-1.5">
+              <CircleDot className="w-4 h-4" />
+              {issueStats.pending} pending
+            </span>
           }
+          tone="blue"
+          icon={<FileText className="w-5 h-5" />}
         />
-        <SummaryCard
-          title="Authorities"
-          value={stats.authorities}
-          accent="border-l-purple-500"
-          icon={
-            <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
-              <Shield className="w-5 h-5" />
-            </div>
+        <TopStatCard
+          title="Urgent Issues"
+          value={issueStats.urgent}
+          subtitle={
+            <span className="inline-flex items-center gap-1.5">
+              <AlertCircle className="w-4 h-4" />
+              Requires attention
+            </span>
           }
+          tone="orange"
+          icon={<AlertCircle className="w-5 h-5" />}
         />
-        <SummaryCard
-          title="Active / Suspended"
-          value={`${stats.active} / ${stats.suspended}`}
-          accent="border-l-orange-500"
-          icon={
-            <div className="w-10 h-10 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center">
-              <UserX className="w-5 h-5" />
-            </div>
+        <TopStatCard
+          title="Resolved"
+          value={issueStats.resolved}
+          subtitle={
+            <span className="inline-flex items-center gap-1.5">
+              <CircleDot className="w-4 h-4" />
+              33% completion rate
+            </span>
           }
+          tone="emerald"
+          icon={<CheckCircle2 className="w-5 h-5" />}
         />
       </div>
 
-      {/* System Statistics */}
-      <section className="bg-white border border-gray-200 rounded-xl shadow-sm">
-        <div className="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
-          <div className="text-green-600">
-            <BadgeCheck className="w-5 h-5" />
-          </div>
-          <h2 className="font-semibold text-gray-900">System Statistics</h2>
-        </div>
+      {/* Secondary mini cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <MiniStatCard
+          title="Citizens"
+          value={stats.citizens}
+          tone="blue"
+          icon={<UserCheck className="w-5 h-5" />}
+        />
+        <MiniStatCard
+          title="Authorities"
+          value={stats.authorities}
+          tone="purple"
+          icon={<Shield className="w-5 h-5" />}
+        />
+        <MiniStatCard
+          title="In Progress"
+          value={issueStats.inProgress}
+          tone="orange"
+          icon={<Clock3 className="w-5 h-5" />}
+        />
+      </div>
 
-        <div className="px-6 py-5 grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <StatPill
-            label="Total Reports"
-            value={267}
-            icon={<FileText className="w-4 h-4 text-gray-600" />}
-          />
-          <StatPill
-            label="Pending"
-            value={43}
-            icon={<Clock3 className="w-4 h-4 text-orange-600" />}
-          />
-          <StatPill
-            label="Resolved"
-            value={224}
-            icon={<CheckCircle2 className="w-4 h-4 text-green-600" />}
-          />
-        </div>
-      </section>
+      {/* Recent panels */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <section id="issues" className="bg-white border border-gray-200 rounded-2xl shadow-sm">
+          <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+            <h2 className="font-semibold text-gray-900">Recent Issues</h2>
+            <button type="button" className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-700 hover:text-gray-900">
+              View All <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="p-6 space-y-4">
+            {recentIssues.map((issue) => (
+              <div
+                key={issue.id}
+                className="flex items-center justify-between gap-4 rounded-xl bg-gray-50 px-4 py-3 transition-colors hover:bg-gray-100"
+              >
+                <div className="min-w-0">
+                  <div className="font-semibold text-gray-900 truncate">{issue.title}</div>
+                  <div className="text-sm text-gray-500 truncate">{issue.location}</div>
+                </div>
+                <span className={`shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${issueBadge(issue.status)}`}>
+                  {issue.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="bg-white border border-gray-200 rounded-2xl shadow-sm">
+          <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+            <h2 className="font-semibold text-gray-900">Recent Users</h2>
+            <button type="button" className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-700 hover:text-gray-900">
+              View All <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="p-6 space-y-3">
+            {recentUsers.length === 0 ? (
+              <div className="text-sm text-gray-500">No users yet.</div>
+            ) : (
+              recentUsers.map((u) => (
+                <div
+                  key={u.id}
+                  className="flex items-center justify-between gap-4 rounded-xl bg-gray-50 px-4 py-3 transition-colors hover:bg-gray-100"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    {resolveProfilePhotoUrl(u.profilePhoto) ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={resolveProfilePhotoUrl(u.profilePhoto)}
+                        alt={u.fullName}
+                        className="w-10 h-10 rounded-full object-cover bg-white border border-gray-200"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 flex items-center justify-center font-semibold">
+                        {initialsFromName(u.fullName)}
+                      </div>
+                    )}
+
+                    <div className="min-w-0">
+                      <div className="font-semibold text-gray-900 truncate">{u.fullName}</div>
+                      <div className="text-sm text-gray-500 truncate">{u.email}</div>
+                    </div>
+                  </div>
+
+                  <span className={`shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${badgeForRole(u.role)}`}>
+                    {u.role}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+      </div>
 
       {/* User Management */}
-      <section className="bg-white border border-gray-200 rounded-xl shadow-sm">
+      <section id="users" className="bg-white border border-gray-200 rounded-2xl shadow-sm">
         <div className="px-6 py-5 border-b border-gray-100 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
-            <div className="text-green-600">
+            <div className="text-emerald-600">
               <Users className="w-5 h-5" />
             </div>
             <div>
               <h2 className="font-semibold text-gray-900">User Management</h2>
-              <p className="text-sm text-gray-500">Create authority accounts and manage users</p>
+              <p className="text-sm text-gray-500">Create users, edit details, and manage access</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={openCreateAuthority}
-              className="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-purple-600 text-white font-semibold hover:bg-purple-700 transition-colors"
+              onClick={openCreateUser}
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors"
             >
               <Plus className="w-4 h-4" />
-              New Authority
-            </button>
-            <button
-              type="button"
-              onClick={openCreateCitizen}
-              className="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              New Citizen
+              New User
             </button>
           </div>
         </div>
@@ -718,9 +849,19 @@ export default function AdminDashboard() {
                       <tr key={u.id} className="hover:bg-gray-50">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
-                              <User className="w-4 h-4" />
-                            </div>
+                            {resolveProfilePhotoUrl(u.profilePhoto) ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={resolveProfilePhotoUrl(u.profilePhoto)}
+                                alt={u.fullName}
+                                className="w-9 h-9 rounded-full object-cover bg-gray-100 border border-gray-200"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
+                                <User className="w-4 h-4" />
+                              </div>
+                            )}
                             <div className="leading-tight">
                               <div className="font-semibold text-gray-900">{u.fullName}</div>
                               <div className="text-gray-500">{u.email}</div>
@@ -809,7 +950,7 @@ export default function AdminDashboard() {
                       {modalMode === "create" ? "Create New User" : "Edit User"}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {modalMode === "create" ? "Add an authority/citizen/admin account" : "Update account details"}
+                      {modalMode === "create" ? "Add an authority or citizen account" : "Update account details"}
                     </div>
                   </div>
                 </div>
@@ -1082,13 +1223,105 @@ function SummaryCard({
   icon: React.ReactNode;
 }) {
   return (
-    <div className={`bg-white border border-gray-200 rounded-xl shadow-sm p-5 border-l-4 ${accent}`}>
+    <div
+      className={
+        "group bg-white border border-gray-200 rounded-2xl shadow-sm p-5 border-l-4 transition-all hover:-translate-y-0.5 hover:shadow-md " +
+        accent
+      }
+    >
       <div className="flex items-center justify-between gap-4">
         <div>
-          <div className="text-sm text-gray-500">{title}</div>
-          <div className="mt-2 text-2xl font-semibold text-gray-900">{value}</div>
+          <div className="text-sm font-medium text-gray-500">{title}</div>
+          <div className="mt-2 text-3xl font-semibold text-gray-900 tracking-tight">{value}</div>
+          <div className="mt-2 h-1.5 w-24 rounded-full bg-gradient-to-r from-gray-200 via-gray-100 to-transparent" />
         </div>
-        {icon}
+        <div className="transition-transform group-hover:scale-[1.03]">{icon}</div>
+      </div>
+    </div>
+  );
+}
+
+function TopStatCard({
+  title,
+  value,
+  subtitle,
+  tone,
+  icon,
+}: {
+  title: string;
+  value: React.ReactNode;
+  subtitle: React.ReactNode;
+  tone: "green" | "blue" | "orange" | "emerald";
+  icon: React.ReactNode;
+}) {
+  const toneStyles =
+    tone === "green"
+      ? "bg-emerald-500"
+      : tone === "blue"
+        ? "bg-blue-600"
+        : tone === "orange"
+          ? "bg-orange-500"
+          : "bg-emerald-600";
+
+  return (
+    <div
+      className={
+        `${toneStyles} text-white rounded-2xl shadow-md border border-black/5 p-5 min-h-[110px] ` +
+        "transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
+      }
+    >
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="text-sm font-semibold text-white/90">{title}</div>
+          <div className="mt-2 text-3xl font-extrabold tracking-tight">{value}</div>
+          <div className="mt-2 text-sm text-white/90">{subtitle}</div>
+        </div>
+        <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+          {icon}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MiniStatCard({
+  title,
+  value,
+  tone,
+  icon,
+}: {
+  title: string;
+  value: React.ReactNode;
+  tone: "blue" | "purple" | "orange";
+  icon: React.ReactNode;
+}) {
+  const toneBorder = tone === "blue" ? "border-l-blue-500" : tone === "purple" ? "border-l-purple-500" : "border-l-orange-500";
+  const toneChip =
+    tone === "blue"
+      ? "bg-blue-50 text-blue-700"
+      : tone === "purple"
+        ? "bg-purple-50 text-purple-700"
+        : "bg-orange-50 text-orange-700";
+
+  return (
+    <div
+      className={
+        `group bg-white border border-gray-200 rounded-2xl shadow-sm px-5 py-4 border-l-4 ${toneBorder} ` +
+        "transition-colors hover:border-gray-300"
+      }
+    >
+      <div className="flex items-center gap-4">
+        <div
+          className={
+            `w-12 h-12 rounded-xl flex items-center justify-center ${toneChip} border border-gray-100`
+          }
+        >
+          {icon}
+        </div>
+        <div>
+          <div className="text-sm text-gray-500">{title}</div>
+          <div className="text-2xl font-semibold text-gray-900">{value}</div>
+        </div>
       </div>
     </div>
   );
