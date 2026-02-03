@@ -17,8 +17,8 @@ import { handleLogout } from "@/lib/actions/auth-action";
 
 const nav = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard, badge: "Preview" },
-  { name: "User Management", href: "/admin#users", icon: Users },
-  { name: "Issue Management", href: "/admin#issues", icon: FolderKanban },
+  { name: "User Management", href: "/admin/user-management", icon: Users },
+  { name: "Issue Management", href: "/admin/issue-management", icon: FolderKanban },
   { name: "Departments", href: "/admin#departments", icon: BarChart3 },
   { name: "Categories", href: "/admin#categories", icon: Tags },
   { name: "Announcements", href: "/admin#announcements", icon: Bell },
@@ -45,7 +45,8 @@ export default function AdminSidebar() {
       <nav className="space-y-1.5 flex-1">
         {nav.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+          const baseHref = item.href.split("#")[0];
+          const isActive = pathname === baseHref || pathname.startsWith(baseHref + "/");
 
           return (
             <Link
