@@ -660,7 +660,7 @@ export default function AdminDashboard() {
         <section id="issues" className="bg-white border border-gray-200 rounded-2xl shadow-sm">
           <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
             <h2 className="font-semibold text-gray-900">Recent Issues</h2>
-            <button type="button" className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-700 hover:text-gray-900">
+            <button type="button" className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-700">
               View All <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -685,7 +685,7 @@ export default function AdminDashboard() {
         <section className="bg-white border border-gray-200 rounded-2xl shadow-sm">
           <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
             <h2 className="font-semibold text-gray-900">Recent Users</h2>
-            <button type="button" className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-700 hover:text-gray-900">
+            <button type="button" className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-700">
               View All <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -1256,12 +1256,12 @@ function TopStatCard({
 }) {
   const toneStyles =
     tone === "green"
-      ? "bg-emerald-500"
+      ? "bg-[#4F46E5]"
       : tone === "blue"
-        ? "bg-blue-600"
+        ? "bg-[#7C3AED]"
         : tone === "orange"
-          ? "bg-orange-500"
-          : "bg-emerald-600";
+          ? "bg-[#E11D48]"
+          : "bg-[#047857]";
 
   return (
     <div

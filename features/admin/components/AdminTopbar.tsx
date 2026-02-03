@@ -35,6 +35,27 @@ function headerForPath(pathname: string) {
     };
   }
 
+  if (pathname.startsWith("/admin/departments")) {
+    return {
+      title: "Departments",
+      subtitle: "Manage your platform effectively",
+    };
+  }
+
+  if (pathname.startsWith("/admin/categories")) {
+    return {
+      title: "Categories",
+      subtitle: "Manage your platform effectively",
+    };
+  }
+
+  if (pathname.startsWith("/admin/settings")) {
+    return {
+      title: "Settings",
+      subtitle: "Manage your platform effectively",
+    };
+  }
+
   return {
     title: "Dashboard",
     subtitle: "Manage your platform effectively",
@@ -55,7 +76,7 @@ export default function AdminTopbar({ user }: Props) {
 
         <div className="flex items-center gap-4">
           <button
-            className="bg-white border border-gray-200 px-3 py-2 rounded-md relative transition-all hover:-translate-y-[1px] hover:shadow-sm"
+            className="bg-white border border-gray-200 px-3 py-2 rounded-lg relative transition-all hover:-translate-y-[1px] hover:shadow-sm"
             aria-label="Notifications"
             type="button"
           >
@@ -63,8 +84,10 @@ export default function AdminTopbar({ user }: Props) {
             <Bell className="w-5 h-5 text-gray-700" />
           </button>
 
+          <div className="h-8 w-px bg-gray-200" />
+
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center font-semibold shadow-sm">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white flex items-center justify-center font-semibold shadow-sm">
               {initialsFromName(user.fullName)}
             </div>
             <div className="leading-tight">
