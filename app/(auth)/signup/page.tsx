@@ -6,7 +6,7 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Signup Form */}
-      <div className="flex-1 flex items-center justify-center bg-white py-12">
+      <div className="flex-1 flex items-center justify-center bg-white py-6">
         <SignupForm />
       </div>
 
@@ -16,8 +16,8 @@ export default function SignupPage() {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative w-full h-full flex items-center justify-center">
             {/* Character illustration placeholder */}
-            <div className="absolute top-10 opacity-20 animate-float">
-              <Image src={signup} alt="Signup Background" className="w-130 h-190  backdrop-blur-sm" />
+            <div className="absolute top-7 opacity-20 animate-float">
+              <Image src={signup} alt="Signup Background" className="w-130 h-150  backdrop-blur-sm" />
             </div>
           </div>
         </div>

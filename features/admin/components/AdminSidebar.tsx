@@ -27,34 +27,82 @@ const nav = [
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
-export default function AdminSidebar() {
+export default function AdminSidebar({
+  variant = "desktop",
+  onNavigate,
+}: {
+  variant?: "desktop" | "mobile";
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname() || "/";
+  const [hash, setHash] = React.useState<string>("");
+
+  React.useEffect(() => {
+    const read = () => setHash(window.location.hash || "");
+
+    read();
+    window.addEventListener("hashchange", read);
+    window.addEventListener("popstate", read);
+    return () => {
+      window.removeEventListener("hashchange", read);
+      window.removeEventListener("popstate", read);
+    };
+  }, []);
+
+  const handleNavClick = (href: string) => {
+    if (onNavigate) onNavigate();
+    const nextHash = href.includes("#") ? `#${href.split("#")[1]}` : "";
+    setHash(nextHash);
+  };
+
+  const asideClassName =
+    variant === "desktop"
+      ? "w-64 h-[100dvh] sticky top-0 flex flex-col border-r border-white/5"
+      : "w-full h-[100dvh] flex flex-col border-r border-white/5";
 
   return (
-    <aside className="w-64 bg-gradient-to-b from-[#0B1020] via-[#0E1730] to-[#0B1020] h-screen sticky top-0 flex flex-col border-r border-white/5">
-      <div className="px-6 pt-6 pb-5 border-b border-white/5">
+    <aside
+      className={asideClassName}
+      style={{
+        background:
+          "linear-gradient(120deg, #040B24 20%, #0E1B4D 50%, #4B3BFF 150%, #1A2D8A 0%, #040B24 0%)",
+         //"linear-gradient(to right, #041027, #3533cd, #041027)",
+      }}
+    >
+      <div className="px-4 pt-5 border-b border-white/10 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.png" alt="logo" className="w-7 h-7 object-contain" />
+          <div className="flex items-center justify-center">
+            
+            <img
+              src="/sajilofix_logo_light.png"
+              alt="logo"
+              className="w-20 h-20 object-contain"
+            />
           </div>
           <div className="leading-tight">
-            <div className="font-semibold text-white">Sajilo Fix</div>
-            <div className="text-sm text-white/70">Admin Panel</div>
+            <div className="font-bold text-white text-2xl font-poppins">Sajilo Fix</div>
+            <div className="text-xs text-white/80">Admin Panel</div>
           </div>
         </div>
       </div>
 
-      <nav className="space-y-1.5 flex-1 px-4 py-5">
+      <nav className="space-y-1 flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-4">
         {nav.map((item) => {
           const Icon = item.icon;
           const baseHref = item.href.split("#")[0];
-          const isActive = pathname === baseHref || pathname.startsWith(baseHref + "/");
+          const isDashboardRoute = pathname === "/admin";
+          const itemHash = item.href.includes("#") ? `#${item.href.split("#")[1]}` : "";
+
+          const isActive =
+            baseHref === "/admin"
+              ? isDashboardRoute && (itemHash ? hash === itemHash : hash === "")
+              : pathname === baseHref || pathname.startsWith(baseHref + "/");
 
           return (
             <Link
               key={item.name}
               href={item.href}
+              onClick={() => handleNavClick(item.href)}
               className={
                 "group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 " +
                 (isActive
@@ -64,7 +112,7 @@ export default function AdminSidebar() {
             >
               <span
                 className={
-                  "w-9 h-9 rounded-lg flex items-center justify-center transition-colors duration-200 " +
+                  "w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-200 " +
                   (isActive
                     ? "bg-white/15"
                     : "bg-white/5 border border-white/10 group-hover:bg-white/10")
@@ -72,17 +120,17 @@ export default function AdminSidebar() {
               >
                 <Icon
                   className={
-                    "w-4 h-4 transition-colors duration-200 " +
+                    "w-5 h-5 transition-colors duration-200 " +
                     (isActive ? "text-white" : "text-white/60 group-hover:text-white")
                   }
                 />
               </span>
-              <span className="font-medium">{item.name}</span>
+              <span className="text-sm font-medium">{item.name}</span>
 
               {item.badge ? (
                 <span
                   className={
-                    "ml-2 rounded-full px-2 py-0.5 text-[11px] font-semibold border " +
+                    "ml-2 rounded-full px-2 py-0.5 text-[10px] font-semibold border " +
                     (isActive
                       ? "bg-white/15 text-white border-white/20"
                       : "bg-white/5 text-white/80 border-white/15")
@@ -105,14 +153,14 @@ export default function AdminSidebar() {
         })}
       </nav>
 
-      <div className="mt-4 px-4 pb-6">
+      <div className="mt-auto px-3 pb-6 shrink-0">
         <form action={handleLogout}>
           <button
             type="submit"
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-white/80 hover:text-white hover:bg-white/5"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-white/80 hover:text-white hover:bg-white/10"
           >
-            <span className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-sm">⎋</span>
-            <span className="font-medium">Logout</span>
+            <span className="w-10 h-10 rounded-lg bg-red-500 border border-white/20 flex items-center justify-center text-sm">⎋</span>
+            <span className="text-sm font-medium">Logout</span>
           </button>
         </form>
       </div>

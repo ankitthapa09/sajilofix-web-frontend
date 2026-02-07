@@ -2,8 +2,7 @@ import React from "react";
 import { redirect } from "next/navigation";
 
 import { getUserData } from "@/lib/cookie";
-import AdminSidebar from "@/features/admin/components/AdminSidebar";
-import AdminTopbar from "@/features/admin/components/AdminTopbar";
+import AdminShell from "@/features/admin/components/AdminShell";
 
 export default async function AdminLayout({
   children,
@@ -14,17 +13,5 @@ export default async function AdminLayout({
   if (user.role === "citizen") redirect("/citizen");
   if (user.role !== "admin") redirect("/admin/login");
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        <AdminSidebar />
-
-        <main className="flex-1">
-          <AdminTopbar user={{ fullName: user.fullName, email: user.email }} />
-
-          <div className="p-8">{children}</div>
-        </main>
-      </div>
-    </div>
-  );
+  return <AdminShell user={{ fullName: user.fullName, email: user.email }}>{children}</AdminShell>;
 }

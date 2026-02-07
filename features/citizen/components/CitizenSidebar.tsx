@@ -13,13 +13,35 @@ const nav = [
   { name: "Settings", href: "/citizen/settings", icon: "cog" },
 ];
 
-export default function CitizenSidebar() {
+export default function CitizenSidebar({
+  variant = "desktop",
+  onNavigate,
+}: {
+  variant?: "desktop" | "mobile";
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname() || "/";
+  return <CitizenSidebarInner pathname={pathname} variant={variant} onNavigate={onNavigate} />;
+}
+
+function CitizenSidebarInner({
+  pathname,
+  variant = "desktop",
+  onNavigate,
+}: {
+  pathname: string;
+  variant?: "desktop" | "mobile";
+  onNavigate?: () => void;
+}) {
+  const asideClassName =
+    variant === "desktop"
+      ? "w-64 bg-white border-r border-gray-200 h-screen sticky top-0 px-4 py-6 flex flex-col"
+      : "w-full bg-white border-r border-gray-200 h-full px-4 py-6 flex flex-col";
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 h-screen sticky top-0 px-4 py-6 flex flex-col">
+    <aside className={asideClassName}>
       <div className="flex items-center gap-3 mb-8">
-        <img src="/logo.png" alt="logo" className="w-10 h-10 object-contain" />
+        <img src="/logo.png" alt="logo" className="w-20 h-12 object-contain" />
         <div>
           <div className="font-semibold text-blue-700">SajiloFix</div>
           <div className="text-sm text-gray-500">Citizen Portal</div>
@@ -35,6 +57,7 @@ export default function CitizenSidebar() {
             <Link
               key={item.name}
               href={item.href}
+              onClick={onNavigate}
               className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
                 isActive ? "bg-blue-50 text-blue-600" : "text-gray-700 hover:bg-gray-50"
               }`}
@@ -60,3 +83,4 @@ export default function CitizenSidebar() {
     </aside>
   );
 }
+

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginFormData } from "../schema";
-import { ArrowLeft, Mail, Lock } from "lucide-react";
+import { ArrowLeft, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import logo from "../../../public/logo.png";
 import Image from "next/image";
@@ -41,6 +41,7 @@ export default function LoginForm({ mode = "user" }: Props) {
   
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -115,14 +116,14 @@ export default function LoginForm({ mode = "user" }: Props) {
       {/* Back to Home */}
       <Link
         href="/"
-        className="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900 mb-8 transition-colors"
+        className="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900 mb-5 transition-colors"
       >
         <ArrowLeft size={20} />
         <span className="font-medium">Back to Home</span>
       </Link>
 
       {/* Logo */}
-      <div className="mb-8">
+      <div className="mb-5">
         <Image
           src={logo}
           alt="Sajilo Fix"
@@ -133,33 +134,33 @@ export default function LoginForm({ mode = "user" }: Props) {
       </div>
 
       {/* Welcome Text */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-        <p className="text-gray-600">Sign in to continue making a difference</p>
+      <div className="mb-6">
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-1.5">Welcome Back</h1>
+        <p className="text-gray-600 text-sm sm:text-base">Sign in to continue making a difference</p>
       </div>
 
-      {mode === "user" && (
-        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-gray-700">
+      {/* {mode === "user" && (
+        <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <p className="text-xs sm:text-sm text-gray-700">
             Citizen and Authority can login here. Admin uses the Admin portal.
           </p>
         </div>
-      )}
+      )} */}
 
       {/* Error Message */}
       {apiError && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-sm text-red-600">{apiError}</p>
         </div>
       )}
 
       {/* Form */}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {/* Email Field */}
         <div>
           <label
             htmlFor="email"
-            className="block text-sm font-medium text-gray-900 mb-2"
+            className="block text-sm font-medium text-gray-900 mb-1.5"
           >
             Email Address
           </label>
@@ -171,7 +172,7 @@ export default function LoginForm({ mode = "user" }: Props) {
               {...register("email")}
               type="email"
               id="email"
-              className={`block w-full pl-10 pr-3 py-3 bg-gray-50 border ${
+              className={`block w-full pl-10 pr-3 py-2.5 bg-gray-50 border ${
                 errors.email ? "border-red-300" : "border-transparent"
               } rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent focus:bg-white transition-all`}
               placeholder="you@example.com"
@@ -186,7 +187,7 @@ export default function LoginForm({ mode = "user" }: Props) {
         <div>
           <label
             htmlFor="password"
-            className="block text-sm font-medium text-gray-900 mb-2"
+            className="block text-sm font-medium text-gray-900 mb-1.5"
           >
             Password
           </label>
@@ -196,13 +197,22 @@ export default function LoginForm({ mode = "user" }: Props) {
             </div>
             <input
               {...register("password")}
-              type="password"
+              type={showPassword ? "text" : "password"}
               id="password"
-              className={`block w-full pl-10 pr-3 py-3 bg-gray-50 border ${
+              className={`block w-full pl-10 pr-10 py-2.5 bg-gray-50 border ${
                 errors.password ? "border-red-300" : "border-transparent"
               } rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent focus:bg-white transition-all`}
               placeholder="••••••••"
             />
+
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
           </div>
           {errors.password && (
             <p className="mt-1 text-sm text-red-600">
@@ -242,7 +252,7 @@ export default function LoginForm({ mode = "user" }: Props) {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          className="w-full py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-blue-500 hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
           {isLoading ? "Signing in..." : "Sign In"}
         </button>

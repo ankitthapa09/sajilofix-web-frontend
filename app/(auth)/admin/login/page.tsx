@@ -1,7 +1,7 @@
 import Image from "next/image";
 
 import LoginForm from "../../_components/login_form";
-import loginbg from "../../../../public/loginbg.png";
+import adminloginbg from "../../../../public/adminbg.png";
 import Link from "next/link";
 
 export default function AdminLoginPage() {
@@ -26,14 +26,14 @@ export default function AdminLoginPage() {
         </div>
       </div>
 
-      <div className="hidden lg:flex flex-1 bg-linear-to-br from-[#2C27AE] via-[#5B8FB9] to-[#27AE60] relative overflow-hidden">
+      <div className="hidden lg:flex flex-1 bg-linear-to-br from-[#2C27AE] via-[#5B8FB9] to-[#ee2c2c] relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative w-full h-full flex items-center justify-center">
-            <div className="absolute top-10 opacity-20 animate-float">
+            <div className="absolute opacity-20 animate-float">
               <Image
-                src={loginbg}
+                src={adminloginbg}
                 alt="Login Background"
-                className="w-130 h-190 backdrop-blur-sm"
+                className="w-350 h-250 backdrop-blur-sm"
               />
             </div>
           </div>
