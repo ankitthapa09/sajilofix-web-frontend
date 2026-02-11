@@ -1,7 +1,17 @@
 import React from "react";
+import { redirect } from "next/navigation";
 
-export default function AdminLayout({
+import { getUserData } from "@/lib/cookie";
+import AdminShell from "@/features/admin/components/AdminShell";
+
+export default async function AdminLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  return <>{children}</>;
+  const user = await getUserData();
+  if (!user) redirect("/admin/login");
+  if (user.role === "authority") redirect("/authority");
+  if (user.role === "citizen") redirect("/citizen");
+  if (user.role !== "admin") redirect("/admin/login");
+
+  return <AdminShell user={{ fullName: user.fullName, email: user.email }}>{children}</AdminShell>;
 }

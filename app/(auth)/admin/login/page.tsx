@@ -1,51 +1,55 @@
-import LoginForm from "../_components/login_form";
 import Image from "next/image";
-import loginbg from "../../../public/loginbg.png";
+
+import LoginForm from "../../_components/login_form";
+import adminloginbg from "../../../../public/adminbg.png";
 import Link from "next/link";
 
-export default function LoginPage() {
+export default function AdminLoginPage() {
   return (
     <div className="min-h-screen flex">
-      {/* Left Side - Login Form */}
       <div className="flex-1 flex items-center justify-center bg-white">
         <div className="w-full max-w-md px-8">
           <div className="flex items-center justify-end mb-4">
-            <Link
-              href="/admin/login"
-              className="inline-flex items-center justify-center px-4 h-10 rounded-lg bg-gray-900 text-white font-semibold hover:bg-gray-800 transition-colors"
-            >
-              Admin
-            </Link>
+            <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1">
+              <Link
+                href="/login"
+                className="px-4 h-9 inline-flex items-center rounded-md text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                User
+              </Link>
+              <span className="px-4 h-9 inline-flex items-center rounded-md text-sm font-semibold bg-gray-900 text-white">
+                Admin
+              </span>
+            </div>
           </div>
-          <LoginForm mode="user" />
+          <LoginForm mode="admin" />
         </div>
       </div>
 
-      {/* Right Side - Hero Section */}
-      <div className="hidden lg:flex flex-1 bg-linear-to-br from-[#2C27AE] via-[#5B8FB9] to-[#27AE60] relative overflow-hidden">
-        {/* Background Illustration - Character */}
+      <div className="hidden lg:flex flex-1 bg-linear-to-br from-[#2C27AE] via-[#5B8FB9] to-[#ee2c2c] relative overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="relative w-full h-full flex items-center justify-center">
-            {/* illustration  */}
-            <div className="absolute top-5 opacity-20 animate-float">
-              <Image src={loginbg} alt="Login Background" className="w-130 h-180  backdrop-blur-sm" />
+            <div className="absolute opacity-20 animate-float">
+              <Image
+                src={adminloginbg}
+                alt="Login Background"
+                className="w-350 h-250 backdrop-blur-sm"
+              />
             </div>
           </div>
         </div>
 
-        {/* Content */}
         <div className="relative z-10 flex flex-col justify-center px-12 py-16 text-white">
           <div className="max-w-lg">
             <h1 className="text-5xl font-bold mb-6 leading-tight">
-              Transforming Communities Together
+              Admin Portal
             </h1>
             <p className="text-xl text-white/90 mb-12 leading-relaxed">
-              Join thousands of citizens and authorities working together to create better, more responsive communities across Nepal.
+              Sign in with an admin email to manage users, roles, and system
+              settings.
             </p>
 
-            {/* Features */}
             <div className="space-y-6">
-              {/* Real-time Tracking */}
               <div className="flex items-start gap-4">
                 <div className="shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
                   <svg
@@ -58,19 +62,20 @@ export default function LoginPage() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      d="M12 11c1.657 0 3-1.343 3-3S13.657 5 12 5 9 6.343 9 8s1.343 3 3 3zM6 19c0-3.314 2.686-6 6-6s6 2.686 6 6"
                     />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-1">Real-time Tracking</h3>
+                  <h3 className="text-lg font-semibold mb-1">
+                    User Management
+                  </h3>
                   <p className="text-white/80 text-sm">
-                    Monitor every stage of your report from submission to resolution
+                    Create authority accounts and manage all users.
                   </p>
                 </div>
               </div>
 
-              {/* Instant Updates */}
               <div className="flex items-start gap-4">
                 <div className="shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
                   <svg
@@ -83,19 +88,18 @@ export default function LoginPage() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      d="M9 12l2 2 4-4M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"
                     />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-1">Instant Updates</h3>
+                  <h3 className="text-lg font-semibold mb-1">Role Based Access</h3>
                   <p className="text-white/80 text-sm">
-                    Get notified about important changes to your reported issues
+                    Access is enforced by the email-based role rules.
                   </p>
                 </div>
               </div>
 
-              {/* Secure & Private */}
               <div className="flex items-start gap-4">
                 <div className="shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
                   <svg
@@ -113,9 +117,9 @@ export default function LoginPage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold mb-1">Secure & Private</h3>
+                  <h3 className="text-lg font-semibold mb-1">Secure Session</h3>
                   <p className="text-white/80 text-sm">
-                    Your data is protected with enterprise-grade security
+                    Your session is stored securely via server actions.
                   </p>
                 </div>
               </div>

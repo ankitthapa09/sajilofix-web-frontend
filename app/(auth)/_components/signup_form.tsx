@@ -12,11 +12,13 @@ import {
   type SignupStep2Data,
   type SignupStep3Data,
 } from "../schema";
-import { ArrowLeft, ArrowRight, User, Mail, Phone, Lock, Check, ChevronDown } from "lucide-react";
+import { ArrowLeft, ArrowRight, User, Mail, Phone, Lock, Check, ChevronDown, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import logo from "../../../public/logo.png";
 import { handleRegister } from "@/lib/actions/auth-action";
+import { toast } from "sonner";
+import { setFlashToast } from "@/lib/toast/flash";
 
 type SignupData = SignupStep1Data & SignupStep2Data & SignupStep3Data;
 
@@ -123,6 +125,8 @@ export default function SignupForm() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string>("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Step 1 form
   const step1Form = useForm<SignupStep1Data>({
@@ -183,11 +187,12 @@ export default function SignupForm() {
     setApiError("");
     const derivedRole = deriveRoleFromEmail(data.email);
     if (derivedRole !== "citizen") {
-      setApiError(
+      const msg =
         derivedRole === "authority"
           ? "Authority accounts cannot self-register. Please contact an admin."
-          : "Admin accounts cannot self-register from here."
-      );
+          : "Admin accounts cannot self-register from here.";
+      setApiError(msg);
+      toast.error(msg);
       return;
     }
     setSignupData({ ...signupData, ...data });
@@ -208,20 +213,27 @@ export default function SignupForm() {
     try {
       const derivedRole = deriveRoleFromEmail(String(finalData.email ?? ""));
       if (derivedRole !== "citizen") {
-        setApiError("Only citizens can self-register. Authority accounts are created by admin.");
+        const msg = "Only citizens can self-register. Authority accounts are created by admin.";
+        setApiError(msg);
+        toast.error(msg);
         return;
       }
 
       const result = await handleRegister(finalData as SignupData);
       if (!result.success) {
-        setApiError(result.message || "Registration failed");
+        const msg = result.message || "Registration failed";
+        setApiError(msg);
+        toast.error(msg);
         return;
       }
 
+      setFlashToast({ type: "success", message: "Account created. Please log in." });
       router.push("/login");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : String(error);
-      setApiError(message || "Registration failed");
+      const msg = message || "Registration failed";
+      setApiError(msg);
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -238,14 +250,14 @@ export default function SignupForm() {
       {/* Back to Home */}
       <Link
         href="/"
-        className="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900 mb-8 transition-colors"
+        className="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900 mb-5 transition-colors"
       >
         <ArrowLeft size={20} />
         <span className="font-medium">Back to Home</span>
       </Link>
 
       {/* Logo */}
-      <div className="mb-8">
+      <div className="mb-5">
         <Image
           src={logo}
           alt="Sajilo Fix"
@@ -256,22 +268,22 @@ export default function SignupForm() {
       </div>
 
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Create Account</h1>
-        <p className="text-gray-600">Join the community making a difference</p>
+      <div className="mb-6">
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-1.5">Create Account</h1>
+        <p className="text-gray-600 text-sm sm:text-base">Join the community making a difference</p>
       </div>
 
       {/* Error Message */}
       {apiError && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-sm text-red-600">{apiError}</p>
         </div>
       )}
 
       {/* Progress Steps */}
-      <div className="flex items-center justify-center mb-8 gap-4">
+      <div className="flex items-center justify-center mb-6 gap-3">
         <div
-          className={`w-12 h-12 rounded-lg flex items-center justify-center font-semibold ${
+          className={`w-10 h-10 rounded-lg flex items-center justify-center font-semibold ${
             currentStep >= 1
               ? "bg-blue-600 text-white"
               : "bg-gray-200 text-gray-500"
@@ -279,9 +291,9 @@ export default function SignupForm() {
         >
           {currentStep > 1 ? <Check size={20} /> : "1"}
         </div>
-        <div className="w-16 h-0.5 bg-gray-300"></div>
+        <div className="w-12 h-0.5 bg-gray-300"></div>
         <div
-          className={`w-12 h-12 rounded-lg flex items-center justify-center font-semibold ${
+          className={`w-10 h-10 rounded-lg flex items-center justify-center font-semibold ${
             currentStep >= 2
               ? "bg-blue-600 text-white"
               : "bg-gray-200 text-gray-500"
@@ -289,9 +301,9 @@ export default function SignupForm() {
         >
           {currentStep > 2 ? <Check size={20} /> : "2"}
         </div>
-        <div className="w-16 h-0.5 bg-gray-300"></div>
+        <div className="w-12 h-0.5 bg-gray-300"></div>
         <div
-          className={`w-12 h-12 rounded-lg flex items-center justify-center font-semibold ${
+          className={`w-10 h-10 rounded-lg flex items-center justify-center font-semibold ${
             currentStep >= 3
               ? "bg-blue-600 text-white"
               : "bg-gray-200 text-gray-500"
@@ -303,17 +315,17 @@ export default function SignupForm() {
 
       {/* Step 1: Basic Info */}
       {currentStep === 1 && (
-        <form onSubmit={step1Form.handleSubmit(onStep1Submit)} className="space-y-5">
+        <form onSubmit={step1Form.handleSubmit(onStep1Submit)} className="space-y-4">
           {/* Role (email-derived) */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-gray-700">
-              Role is derived from your email (citizen-only self registration).
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-xs sm:text-sm text-gray-700">
+              Role is derived from your email.
             </p>
             <p className="text-sm font-semibold text-gray-900 mt-1">
               Detected role: {deriveRoleFromEmail(step1Form.watch("email") || "")}
             </p>
             <p className="text-xs text-gray-600 mt-1">
-              Authority accounts are created by admin. Admin email: admin@sajilofix.com
+              Authority accounts are created by admin.
             </p>
           </div>
 
@@ -330,7 +342,7 @@ export default function SignupForm() {
                 {...step1Form.register("fullName")}
                 type="text"
                 id="fullName"
-                className="block w-full pl-10 pr-3 py-3 bg-gray-50 border border-transparent rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent focus:bg-white transition-all"
+                className="block w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-transparent rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent focus:bg-white transition-all"
                 placeholder="Ram"
               />
             </div>
@@ -354,7 +366,7 @@ export default function SignupForm() {
                 {...step1Form.register("email")}
                 type="email"
                 id="email"
-                className="block w-full pl-10 pr-3 py-3 bg-gray-50 border border-transparent rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent focus:bg-white transition-all"
+                className="block w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-transparent rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent focus:bg-white transition-all"
                 placeholder="r@gmail.com"
               />
             </div>
@@ -377,7 +389,7 @@ export default function SignupForm() {
                   <select
                     {...step1Form.register("phoneCountryCode")}
                     id="phoneCountryCode"
-                    className="block w-full h-12 appearance-none px-4 pr-10 bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    className="block w-full h-11 appearance-none px-4 pr-10 bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                   >
                     {COUNTRY_CODES.map((c) => (
                       <option key={c.value} value={c.value}>
@@ -409,7 +421,7 @@ export default function SignupForm() {
                     type="tel"
                     inputMode="numeric"
                     id="phone"
-                    className="block w-full h-12 pl-10 pr-4 bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    className="block w-full h-11 pl-10 pr-4 bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     placeholder="10-digit number"
                   />
                 </div>
@@ -426,7 +438,7 @@ export default function SignupForm() {
           {/* Continue Button */}
           <button
             type="submit"
-            className="w-full flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-all"
+            className="w-full flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-all"
           >
             Continue
             <ArrowRight size={20} />
@@ -436,7 +448,7 @@ export default function SignupForm() {
 
       {/* Step 2: Location */}
       {currentStep === 2 && (
-        <form onSubmit={step2Form.handleSubmit(onStep2Submit)} className="space-y-6">
+        <form onSubmit={step2Form.handleSubmit(onStep2Submit)} className="space-y-5">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-gray-800 font-medium">Location details</p>
             <p className="text-sm text-gray-700 mt-1">
@@ -575,14 +587,14 @@ export default function SignupForm() {
             <button
               type="button"
               onClick={handleBack}
-              className="flex-1 flex justify-center items-center gap-2 py-3 px-4 border border-gray-300 rounded-lg text-base font-semibold text-gray-700 hover:bg-gray-50 transition-all"
+              className="flex-1 flex justify-center items-center gap-2 py-2.5 px-4 border border-gray-300 rounded-lg text-base font-semibold text-gray-700 hover:bg-gray-50 transition-all"
             >
               <ArrowLeft size={20} />
               Back
             </button>
             <button
               type="submit"
-              className="flex-1 flex justify-center items-center gap-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-all"
+              className="flex-1 flex justify-center items-center gap-2 py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-all"
             >
               Continue
               <ArrowRight size={20} />
@@ -593,7 +605,7 @@ export default function SignupForm() {
 
       {/* Step 3: Password */}
       {currentStep === 3 && (
-        <form onSubmit={step3Form.handleSubmit(onStep3Submit)} className="space-y-5">
+        <form onSubmit={step3Form.handleSubmit(onStep3Submit)} className="space-y-4">
           {/* Password */}
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-900 mb-2">
@@ -605,11 +617,20 @@ export default function SignupForm() {
               </div>
               <input
                 {...step3Form.register("password")}
-                type="password"
+                type={showPassword ? "text" : "password"}
                 id="password"
-                className="block w-full pl-10 pr-3 py-3 bg-gray-50 border border-transparent rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent focus:bg-white transition-all"
+                className="block w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-transparent rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent focus:bg-white transition-all"
                 placeholder="••••••••"
               />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
             </div>
             <p className="mt-1 text-xs text-gray-500">
               Must be at least 8 characters with a mix of letters and numbers
@@ -632,11 +653,20 @@ export default function SignupForm() {
               </div>
               <input
                 {...step3Form.register("confirmPassword")}
-                type="password"
+                type={showConfirmPassword ? "text" : "password"}
                 id="confirmPassword"
-                className="block w-full pl-10 pr-3 py-3 bg-gray-50 border border-transparent rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent focus:bg-white transition-all"
+                className="block w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-transparent rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent focus:bg-white transition-all"
                 placeholder="••••••••"
               />
+
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((v) => !v)}
+                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+              >
+                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
             </div>
             {step3Form.formState.errors.confirmPassword && (
               <p className="mt-1 text-sm text-red-600">
@@ -675,7 +705,7 @@ export default function SignupForm() {
             <button
               type="button"
               onClick={handleBack}
-              className="flex-1 flex justify-center items-center gap-2 py-3 px-4 border-2 border-gray-300 rounded-lg text-base font-semibold text-gray-700 hover:bg-gray-50 transition-all"
+              className="flex-1 flex justify-center items-center gap-2 py-2.5 px-4 border-2 border-gray-300 rounded-lg text-base font-semibold text-gray-700 hover:bg-gray-50 transition-all"
             >
               <ArrowLeft size={20} />
               Back
@@ -683,7 +713,7 @@ export default function SignupForm() {
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="flex-1 py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {isLoading ? "Creating account..." : "Create Account"}
             </button>
