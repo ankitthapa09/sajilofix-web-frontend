@@ -202,15 +202,12 @@ function badgeForStatus(status: Status) {
   return "bg-gray-100 text-gray-700";
 }
 
-type TabKey = "all" | "citizens" | "authorities";
-
 type ModalMode = "create" | "edit";
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState<AdminUserRow[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [loadError, setLoadError] = useState<string>("");
-  const [tab, setTab] = useState<TabKey>("all");
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<Role | "all">("all");
   const [statusFilter, setStatusFilter] = useState<Status | "all">("all");
@@ -308,11 +305,6 @@ export default function AdminDashboard() {
 
     return users
       .filter((u) => {
-        if (tab === "citizens" && u.role !== "citizen") return false;
-        if (tab === "authorities" && u.role !== "authority") return false;
-        return true;
-      })
-      .filter((u) => {
         if (roleFilter !== "all" && u.role !== roleFilter) return false;
         if (statusFilter !== "all" && u.status !== statusFilter) return false;
         return true;
@@ -324,7 +316,7 @@ export default function AdminDashboard() {
           u.email.toLowerCase().includes(q)
         );
       });
-  }, [roleFilter, search, statusFilter, tab, users]);
+  }, [roleFilter, search, statusFilter, users]);
 
   const openCreate = (role: "authority" | "citizen") => {
     setModalMode("create");
@@ -467,7 +459,6 @@ export default function AdminDashboard() {
         });
 
         setModalOpen(false);
-        setTab("authorities");
         await loadUsers();
         toast.success("Authority account created");
         return;
@@ -496,7 +487,6 @@ export default function AdminDashboard() {
         });
 
         setModalOpen(false);
-        setTab("citizens");
         await loadUsers();
         toast.success("Citizen account created");
         return;
@@ -752,15 +742,6 @@ export default function AdminDashboard() {
               <Plus className="w-4 h-4" />
               New User
             </button>
-          </div>
-        </div>
-
-        <div className="px-6 pt-5">
-          {/* Tabs */}
-          <div className="inline-flex rounded-lg bg-gray-100 p-1">
-            <TabButton active={tab === "all"} onClick={() => setTab("all")}>All Users</TabButton>
-            <TabButton active={tab === "citizens"} onClick={() => setTab("citizens")}>Citizens</TabButton>
-            <TabButton active={tab === "authorities"} onClick={() => setTab("authorities")}>Authorities</TabButton>
           </div>
         </div>
 
@@ -1346,28 +1327,5 @@ function StatPill({
         <div className="text-lg font-semibold text-gray-900">{value}</div>
       </div>
     </div>
-  );
-}
-
-function TabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={
-        "px-3 py-1.5 text-sm font-semibold rounded-md transition-colors " +
-        (active ? "bg-white text-gray-900 shadow-sm" : "text-gray-600 hover:text-gray-900")
-      }
-    >
-      {children}
-    </button>
   );
 }

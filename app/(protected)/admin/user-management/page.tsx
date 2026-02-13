@@ -81,6 +81,8 @@ function roleLabel(role: Role) {
 
 type ModalMode = "create" | "edit";
 
+type TabKey = "all" | "citizens" | "authorities";
+
 type UserFormValues = {
   formMode: ModalMode;
   fullName: string;
@@ -192,6 +194,11 @@ export default function AdminUserManagementPage() {
   const [users, setUsers] = useState<AdminUserRow[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [loadError, setLoadError] = useState<string>("");
+  const [page, setPage] = useState(1);
+  const [pageMeta, setPageMeta] = useState<{ total: number; page: number; limit: number; totalPages: number } | null>(null);
+  const pageSize = 10;
+
+  const [tab, setTab] = useState<TabKey>("all");
 
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<Role | "all">("all");
@@ -236,34 +243,35 @@ export default function AdminUserManagementPage() {
     setLoadingUsers(true);
     setLoadError("");
     try {
-      const json = await adminListUsers();
+      const json = await adminListUsers({
+        page,
+        limit: pageSize,
+        search: search.trim() || undefined,
+        role: roleFilter,
+        status: statusFilter,
+        tab,
+      });
       setUsers(Array.isArray(json?.data) ? (json.data as AdminUserRow[]) : []);
+      setPageMeta(json?.meta ?? null);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       setLoadError(msg || "Failed to load users");
       setUsers([]);
+      setPageMeta(null);
     } finally {
       setLoadingUsers(false);
     }
-  }, []);
+  }, [page, pageSize, roleFilter, search, statusFilter, tab]);
 
   useEffect(() => {
     void loadUsers();
   }, [loadUsers]);
 
-  const filteredUsers = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return users
-      .filter((u) => {
-        if (roleFilter !== "all" && u.role !== roleFilter) return false;
-        if (statusFilter !== "all" && u.status !== statusFilter) return false;
-        return true;
-      })
-      .filter((u) => {
-        if (!q) return true;
-        return u.fullName.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
-      });
-  }, [roleFilter, search, statusFilter, users]);
+  useEffect(() => {
+    setPage(1);
+  }, [roleFilter, search, statusFilter, tab]);
+
+  const filteredUsers = users;
 
   const openCreateUser = () => {
     setModalMode("create");
@@ -400,6 +408,7 @@ export default function AdminUserManagementPage() {
           status: trimmed.status,
         });
         setModalOpen(false);
+        setTab("authorities");
         await loadUsers();
         toast.success("Authority account created");
         return;
@@ -427,6 +436,7 @@ export default function AdminUserManagementPage() {
           status: trimmed.status,
         });
         setModalOpen(false);
+        setTab("citizens");
         await loadUsers();
         toast.success("Citizen account created");
         return;
@@ -525,6 +535,12 @@ export default function AdminUserManagementPage() {
           <Plus className="w-4 h-4" />
           Create User
         </button>
+      </div>
+
+      <div className="inline-flex rounded-lg bg-gray-100 p-1">
+        <TabButton active={tab === "all"} onClick={() => setTab("all")}>All Users</TabButton>
+        <TabButton active={tab === "citizens"} onClick={() => setTab("citizens")}>Citizens</TabButton>
+        <TabButton active={tab === "authorities"} onClick={() => setTab("authorities")}>Authorities</TabButton>
       </div>
 
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-4">
@@ -689,6 +705,40 @@ export default function AdminUserManagementPage() {
             </tbody>
           </table>
         </div>
+
+        {pageMeta && pageMeta.totalPages > 1 && (
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-3 border-t border-gray-200 bg-white">
+            <div className="text-sm text-gray-600">
+              Page <span className="font-semibold text-gray-900">{pageMeta.page}</span> of {pageMeta.totalPages}
+              <span className="mx-2 text-gray-300">•</span>
+              Showing {(pageMeta.page - 1) * pageMeta.limit + 1}–{Math.min(pageMeta.page * pageMeta.limit, pageMeta.total)} of {pageMeta.total}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={pageMeta.page <= 1}
+                className="h-9 px-3 rounded-full border border-gray-200 bg-gray-50 text-sm font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Prev
+              </button>
+
+              <div className="h-9 px-3 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-800 flex items-center">
+                {pageMeta.page}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(pageMeta.totalPages, p + 1))}
+                disabled={pageMeta.page >= pageMeta.totalPages}
+                className="h-9 px-3 rounded-full border border-gray-200 bg-gray-50 text-sm font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {modalOpen && (
@@ -897,5 +947,28 @@ export default function AdminUserManagementPage() {
       {/* small spacer to match screenshot whitespace */}
       <div className="h-10" />
     </div>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        "px-3 py-1.5 text-sm font-semibold rounded-md transition-colors " +
+        (active ? "bg-white text-gray-900 shadow-sm" : "text-gray-600 hover:text-gray-900")
+      }
+    >
+      {children}
+    </button>
   );
 }

@@ -20,6 +20,12 @@ type AdminUserRow = {
 type ListUsersResponse = {
   success: boolean;
   data: AdminUserRow[];
+  meta?: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 };
 
 type CreateAuthorityRequest = {
@@ -102,9 +108,26 @@ function unwrapError(error: unknown, fallback: string) {
   return err.response?.data?.message || err.message || fallback;
 }
 
-export async function adminListUsers(): Promise<ListUsersResponse> {
+export async function adminListUsers(
+  params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    role?: Role | "all";
+    status?: Status | "all";
+    tab?: "all" | "citizens" | "authorities";
+  } = {}
+): Promise<ListUsersResponse> {
   try {
-    const response = await apiClient.get(API_ENDPOINTS.admin.users);
+    const query = new URLSearchParams();
+    if (params.page) query.set("page", String(params.page));
+    if (params.limit) query.set("limit", String(params.limit));
+    if (params.search) query.set("search", params.search);
+    if (params.role && params.role !== "all") query.set("role", params.role);
+    if (params.status && params.status !== "all") query.set("status", params.status);
+    if (params.tab && params.tab !== "all") query.set("tab", params.tab);
+    const url = query.size ? `${API_ENDPOINTS.admin.users}?${query.toString()}` : API_ENDPOINTS.admin.users;
+    const response = await apiClient.get(url);
     return response.data as ListUsersResponse;
   } catch (error: unknown) {
     throw new Error(unwrapError(error, "Failed to load users"));
