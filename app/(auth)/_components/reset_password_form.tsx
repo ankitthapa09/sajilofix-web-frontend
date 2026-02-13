@@ -1,39 +1,74 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Lock, Eye, EyeOff, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import logo from "../../../public/logo.png";
 import { resetPasswordSchema, type ResetPasswordFormData } from "../schema";
+import { handleResetPassword } from "@/lib/actions/auth-action";
 
 export default function ResetPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [apiError, setApiError] = useState("");
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token") ?? "";
+
+  useEffect(() => {
+    if (!isSubmitted) return;
+    const timeoutId = window.setTimeout(() => setIsSubmitted(false), 4000);
+    return () => window.clearTimeout(timeoutId);
+  }, [isSubmitted]);
 
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordSchema),
   });
 
-  const onSubmit = async (_data: ResetPasswordFormData) => {
+  const onSubmit = async (data: ResetPasswordFormData) => {
     setIsLoading(true);
     setIsSubmitted(false);
+    setApiError("");
 
-    // UI-only flow. Replace with API call when backend is ready.
-    await new Promise((resolve) => setTimeout(resolve, 700));
+    if (!token) {
+      const msg = "Reset token is missing";
+      setApiError(msg);
+      toast.error(msg);
+      setIsLoading(false);
+      return;
+    }
 
-    setIsLoading(false);
-    setIsSubmitted(true);
-    toast.success("Password reset complete");
+    try {
+      const result = await handleResetPassword(token, data);
+
+      if (!result.success) {
+        const msg = result.message || "Unable to reset password";
+        setApiError(msg);
+        toast.error(msg);
+        return;
+      }
+
+      setIsSubmitted(true);
+      reset({ password: "", confirmPassword: "" });
+      toast.success(result.message || "Password reset complete");
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Unable to reset password";
+      setApiError(msg);
+      toast.error(msg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -56,6 +91,12 @@ export default function ResetPasswordForm() {
           Create a new password to regain access to your account.
         </p>
       </div>
+
+      {apiError && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-600">{apiError}</p>
+        </div>
+      )}
 
       {isSubmitted && (
         <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start gap-2">

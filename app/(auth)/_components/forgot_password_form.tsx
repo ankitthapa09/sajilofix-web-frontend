@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Mail, CheckCircle2 } from "lucide-react";
@@ -9,30 +9,60 @@ import Image from "next/image";
 import { toast } from "sonner";
 import logo from "../../../public/logo.png";
 import { forgotPasswordSchema, type ForgotPasswordFormData } from "../schema";
+import { handleForgotPassword } from "@/lib/actions/auth-action";
 
 export default function ForgotPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [apiError, setApiError] = useState("");
+
+  useEffect(() => {
+    if (!isSubmitted) return;
+    const timeoutId = window.setTimeout(() => setIsSubmitted(false), 4000);
+    return () => window.clearTimeout(timeoutId);
+  }, [isSubmitted]);
 
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<ForgotPasswordFormData>({
     resolver: zodResolver(forgotPasswordSchema),
   });
 
-  const onSubmit = async (_data: ForgotPasswordFormData) => {
+  const onSubmit = async (data: ForgotPasswordFormData) => {
     setIsLoading(true);
     setIsSubmitted(false);
+    setApiError("");
 
-    // UI-only flow. Replace with API call when backend is ready.
-    await new Promise((resolve) => setTimeout(resolve, 600));
+    try {
+      const result = await handleForgotPassword(data);
 
-    setIsLoading(false);
-    setIsSubmitted(true);
-    toast.success("Reset link request sent");
+      if (!result.success) {
+        const msg = result.message || "Unable to send reset link";
+        setApiError(msg);
+        toast.error(msg);
+        return;
+      }
+
+      setIsSubmitted(true);
+      reset({ email: "" });
+      toast.success(result.message || "If the email exists, a reset link has been sent");
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "Unable to send reset link";
+      setApiError(msg);
+      toast.error(msg);
+    } finally {
+      setIsLoading(false);
+    }
   };
+      {apiError && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-sm text-red-600">{apiError}</p>
+        </div>
+      )}
+
 
   return (
     <div className="w-full max-w-md px-8">
