@@ -1,9 +1,11 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { Camera, Mail, MapPin, Phone, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { usersGetMe, usersUpdateMyPhoto } from "@/lib/api/users";
+import { syncUserData } from "@/lib/actions/auth-action";
 
 type MeUser = {
   fullName?: string;
@@ -34,6 +36,7 @@ function toPhotoUrl(profilePhoto?: string) {
 }
 
 export default function AdminSettingsProfile() {
+  const router = useRouter();
   const [me, setMe] = React.useState<MeUser | null>(null);
   const [loading, setLoading] = React.useState(true);
 
@@ -106,9 +109,17 @@ export default function AdminSettingsProfile() {
       if (selectedFile) {
         const resp = await usersUpdateMyPhoto(selectedFile);
         setMe(resp.user as unknown as MeUser);
+        await syncUserData(resp.user as unknown as {
+          id: string;
+          fullName: string;
+          email: string;
+          role: string;
+          profilePhoto?: string;
+        });
         setSelectedFile(null);
         setPreviewUrl("");
         toast.success("Profile photo updated");
+        router.refresh();
       }
 
       // Text fields are UI-only for now (no API endpoint exists yet).

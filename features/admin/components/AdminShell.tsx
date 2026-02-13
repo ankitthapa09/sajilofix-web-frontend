@@ -10,6 +10,7 @@ type Props = {
   user: {
     fullName?: string;
     email?: string;
+    profilePhoto?: string;
   };
   children: React.ReactNode;
 };

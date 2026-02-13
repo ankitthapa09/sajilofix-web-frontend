@@ -9,7 +9,6 @@ import {
   FileText,
   Pencil,
   Plus,
-  Search,
   Shield,
   Trash2,
   User,
@@ -208,7 +207,9 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<AdminUserRow[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [loadError, setLoadError] = useState<string>("");
-  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageMeta, setPageMeta] = useState<{ total: number; page: number; limit: number; totalPages: number } | null>(null);
+  const pageSize = 8;
   const [roleFilter, setRoleFilter] = useState<Role | "all">("all");
   const [statusFilter, setStatusFilter] = useState<Status | "all">("all");
 
@@ -251,20 +252,31 @@ export default function AdminDashboard() {
     setLoadingUsers(true);
     setLoadError("");
     try {
-      const json = await adminListUsers();
+      const json = await adminListUsers({
+        page,
+        limit: pageSize,
+        role: roleFilter,
+        status: statusFilter,
+      });
       setUsers(Array.isArray(json?.data) ? (json.data as AdminUserRow[]) : []);
+      setPageMeta(json?.meta ?? null);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       setLoadError(msg || "Failed to load users");
       setUsers([]);
+      setPageMeta(null);
     } finally {
       setLoadingUsers(false);
     }
-  }, []);
+  }, [page, pageSize, roleFilter, statusFilter]);
 
   useEffect(() => {
     void loadUsers();
   }, [loadUsers]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [roleFilter, statusFilter]);
 
   const stats = useMemo(() => {
     const totalUsers = users.length;
@@ -300,23 +312,7 @@ export default function AdminDashboard() {
     return { total, pending, urgent, resolved, inProgress };
   }, [recentIssues]);
 
-  const filteredUsers = useMemo(() => {
-    const q = search.trim().toLowerCase();
-
-    return users
-      .filter((u) => {
-        if (roleFilter !== "all" && u.role !== roleFilter) return false;
-        if (statusFilter !== "all" && u.status !== statusFilter) return false;
-        return true;
-      })
-      .filter((u) => {
-        if (!q) return true;
-        return (
-          u.fullName.toLowerCase().includes(q) ||
-          u.email.toLowerCase().includes(q)
-        );
-      });
-  }, [roleFilter, search, statusFilter, users]);
+  const filteredUsers = useMemo(() => users, [users]);
 
   const openCreate = (role: "authority" | "citizen") => {
     setModalMode("create");
@@ -746,18 +742,6 @@ export default function AdminDashboard() {
         </div>
 
         <div className="px-6 py-5 flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search by name or email..."
-                className="h-10 w-full pl-9 pr-3 rounded-md border border-gray-200 bg-gray-50 focus:bg-white outline-none focus:ring-2 focus:ring-green-200"
-              />
-            </div>
-          </div>
-
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="min-w-44">
               <select
@@ -907,6 +891,40 @@ export default function AdminDashboard() {
               </tbody>
             </table>
           </div>
+
+          {pageMeta && pageMeta.total > pageMeta.limit && (
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-3 border-t border-gray-200 bg-white">
+              <div className="text-sm text-gray-600">
+                Page <span className="font-semibold text-gray-900">{pageMeta.page}</span> of {pageMeta.totalPages}
+                <span className="mx-2 text-gray-300">•</span>
+                Showing {(pageMeta.page - 1) * pageMeta.limit + 1}–{Math.min(pageMeta.page * pageMeta.limit, pageMeta.total)} of {pageMeta.total}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={pageMeta.page <= 1}
+                  className="h-9 px-3 rounded-full border border-gray-200 bg-gray-50 text-sm font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Prev
+                </button>
+
+                <div className="h-9 px-3 rounded-full border border-gray-200 bg-white text-sm font-semibold text-gray-800 flex items-center">
+                  {pageMeta.page}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => Math.min(pageMeta.totalPages, p + 1))}
+                  disabled={pageMeta.page >= pageMeta.totalPages}
+                  className="h-9 px-3 rounded-full border border-gray-200 bg-gray-50 text-sm font-semibold text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

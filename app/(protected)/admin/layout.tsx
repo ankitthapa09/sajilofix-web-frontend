@@ -13,5 +13,15 @@ export default async function AdminLayout({
   if (user.role === "citizen") redirect("/citizen");
   if (user.role !== "admin") redirect("/admin/login");
 
-  return <AdminShell user={{ fullName: user.fullName, email: user.email }}>{children}</AdminShell>;
+  return (
+    <AdminShell
+      user={{
+        fullName: user.fullName,
+        email: user.email,
+        profilePhoto: typeof user.profilePhoto === "string" ? user.profilePhoto : undefined,
+      }}
+    >
+      {children}
+    </AdminShell>
+  );
 }

@@ -17,6 +17,15 @@ type ActionResult<T = unknown> = {
   data?: T;
 };
 
+type UserSessionData = {
+  id: string;
+  fullName: string;
+  email: string;
+  role: string;
+  profilePhoto?: string;
+  [key: string]: unknown;
+};
+
 export async function handleRegister(formData: SignupFormData): Promise<ActionResult> {
   try {
     const response = await register(formData);
@@ -97,6 +106,22 @@ export async function handleResetPassword(
     return {
       success: false,
       message: error instanceof Error ? error.message : "Unable to reset password",
+    };
+  }
+}
+
+export async function syncUserData(userData: UserSessionData): Promise<ActionResult<UserSessionData>> {
+  try {
+    await setUserData(userData);
+    return {
+      success: true,
+      message: "User session updated",
+      data: userData,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Failed to update session",
     };
   }
 }
