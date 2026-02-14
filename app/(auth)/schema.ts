@@ -12,6 +12,32 @@ export const loginSchema = z.object({
     .min(6, "Password must be at least 6 characters"),
 });
 
+// Forgot Password Schema
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address"),
+});
+
+// Reset Password Schema
+export const resetPasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(1, "Password is required")
+      .min(8, "Password must be at least 8 characters")
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+        "Password must contain uppercase, lowercase, and numbers"
+      ),
+    confirmPassword: z.string().min(1, "Please confirm your password"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
 // Signup Step 1 Schema
 export const signupStep1Schema = z.object({
   fullName: z
@@ -69,6 +95,8 @@ export const signupSchema = signupStep1Schema
 
 // Type inference
 export type LoginFormData = z.infer<typeof loginSchema>;
+export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 export type SignupStep1Data = z.infer<typeof signupStep1Schema>;
 export type SignupStep2Data = z.infer<typeof signupStep2Schema>;
 export type SignupStep3Data = z.infer<typeof signupStep3Schema>;

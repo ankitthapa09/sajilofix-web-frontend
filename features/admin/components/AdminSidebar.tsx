@@ -55,6 +55,11 @@ export default function AdminSidebar({
     setHash(nextHash);
   };
 
+  const confirmLogout: React.FormEventHandler<HTMLFormElement> = (event) => {
+    if (window.confirm("Are you sure you want to log out?")) return;
+    event.preventDefault();
+  };
+
   const asideClassName =
     variant === "desktop"
       ? "w-64 h-[100dvh] sticky top-0 flex flex-col border-r border-white/5"
@@ -154,7 +159,7 @@ export default function AdminSidebar({
       </nav>
 
       <div className="mt-auto px-3 pb-6 shrink-0">
-        <form action={handleLogout}>
+        <form action={handleLogout} onSubmit={confirmLogout}>
           <button
             type="submit"
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-white/80 hover:text-white hover:bg-white/10"

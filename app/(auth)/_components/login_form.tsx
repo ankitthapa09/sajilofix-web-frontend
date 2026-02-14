@@ -239,12 +239,12 @@ export default function LoginForm({ mode = "user" }: Props) {
           </div>
 
           <div className="text-sm">
-            <a
-              href="#"
+            <Link
+              href="/forgot-password"
               className="font-medium text-red-500 hover:text-red-600 transition-colors"
             >
               Forgot password?
-            </a>
+            </Link>
           </div>
         </div>
 
