@@ -48,7 +48,7 @@ export default function ReportNewIssueUploadPhotosStep() {
           Back
         </Link>
 
-        <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+        <div className="flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
           Step 2 of 6
         </div>
       </div>
@@ -72,9 +72,9 @@ export default function ReportNewIssueUploadPhotosStep() {
                       className={
                         "h-9 w-9 rounded-full border flex items-center justify-center text-sm font-semibold " +
                         (isActive
-                          ? "border-emerald-500 text-emerald-700 bg-emerald-50"
+                          ? "border-blue-500 text-blue-700 bg-blue-50"
                           : isDone
-                            ? "border-emerald-500 bg-emerald-500 text-white"
+                            ? "border-blue-500 bg-blue-500 text-white"
                             : "border-gray-200 text-gray-400")
                       }
                     >
@@ -136,23 +136,27 @@ export default function ReportNewIssueUploadPhotosStep() {
             <div className="mt-6 border-t border-gray-200 pt-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <Link
                 href="/citizen/report-new-issue/category"
-                className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                className="inline-flex items-center justify-center rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 hover:border-blue-300 hover:bg-blue-50"
               >
                 Previous
               </Link>
 
-              <button
-                type="button"
-                disabled={files.length === 0}
-                className={
-                  "inline-flex items-center justify-center rounded-lg px-5 py-2 text-sm font-semibold text-white transition-colors " +
-                  (files.length
-                    ? "bg-emerald-500 hover:bg-emerald-600"
-                    : "bg-emerald-300 cursor-not-allowed")
-                }
-              >
-                Continue
-              </button>
+              {files.length ? (
+                <Link
+                  href="/citizen/report-new-issue/location"
+                  className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+                >
+                  Continue
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  disabled
+                  className="inline-flex items-center justify-center rounded-lg bg-blue-300 px-5 py-2 text-sm font-semibold text-white cursor-not-allowed"
+                >
+                  Continue
+                </button>
+              )}
             </div>
           </div>
         </div>

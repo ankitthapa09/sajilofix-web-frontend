@@ -95,7 +95,7 @@ export default function ReportNewIssueCategoryStep() {
           Back
         </Link>
 
-        <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+        <div className="flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
           Step 1 of 6
         </div>
       </div>
@@ -119,9 +119,9 @@ export default function ReportNewIssueCategoryStep() {
                       className={
                         "h-9 w-9 rounded-full border flex items-center justify-center text-sm font-semibold " +
                         (isActive
-                          ? "border-emerald-500 text-emerald-600 bg-emerald-50"
+                          ? "border-blue-500 text-blue-600 bg-blue-50"
                           : isDone
-                            ? "border-emerald-500 bg-emerald-500 text-white"
+                            ? "border-blue-500 bg-blue-500 text-white"
                             : "border-gray-200 text-gray-400")
                       }
                     >
@@ -163,7 +163,7 @@ export default function ReportNewIssueCategoryStep() {
                     onClick={() => setSelected(category.id)}
                     className={
                       "group rounded-2xl border px-4 py-5 text-center transition-all hover:-translate-y-0.5 hover:border-gray-300 " +
-                      (isSelected ? "border-emerald-500 bg-emerald-50/40 shadow-sm" : "border-gray-200 bg-white")
+                      (isSelected ? "border-blue-500 bg-blue-50/40 shadow-sm" : "border-gray-200 bg-white")
                     }
                   >
                     <div className="mx-auto h-11 w-11 rounded-2xl border border-gray-200 bg-gray-50 flex items-center justify-center">
