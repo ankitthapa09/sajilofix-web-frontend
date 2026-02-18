@@ -6,6 +6,10 @@ import {
   ArrowLeft,
   ClipboardList,
   Construction,
+  Camera,
+  MapPin,
+  FileText,
+  AlertTriangle,
   Droplet,
   Lightbulb,
   Recycle,
@@ -19,8 +23,6 @@ type Category = {
   id: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  tone: string;
-  iconTone: string;
 };
 
 const categories: Category[] = [
@@ -28,70 +30,54 @@ const categories: Category[] = [
     id: "road",
     label: "Road Maintenance",
     icon: Construction,
-    tone: "border-amber-200 bg-amber-50/60",
-    iconTone: "text-amber-600",
   },
   {
     id: "lighting",
     label: "Street Lighting",
     icon: Lightbulb,
-    tone: "border-yellow-200 bg-yellow-50/60",
-    iconTone: "text-yellow-600",
   },
   {
     id: "waste",
     label: "Waste Management",
     icon: Recycle,
-    tone: "border-emerald-200 bg-emerald-50/60",
-    iconTone: "text-emerald-600",
   },
   {
     id: "water",
     label: "Water Supply",
     icon: Droplet,
-    tone: "border-sky-200 bg-sky-50/60",
-    iconTone: "text-sky-600",
   },
   {
     id: "drainage",
     label: "Drainage",
     icon: Waves,
-    tone: "border-blue-200 bg-blue-50/60",
-    iconTone: "text-blue-600",
   },
   {
     id: "parks",
     label: "Parks & Recreation",
     icon: Trees,
-    tone: "border-lime-200 bg-lime-50/60",
-    iconTone: "text-lime-600",
   },
   {
     id: "traffic",
     label: "Traffic & Parking",
     icon: Car,
-    tone: "border-rose-200 bg-rose-50/60",
-    iconTone: "text-rose-600",
   },
   {
     id: "other",
     label: "Other",
     icon: ClipboardList,
-    tone: "border-gray-200 bg-gray-50",
-    iconTone: "text-gray-600",
   },
 ];
 
 const steps = [
-  { id: 1, label: "Category" },
-  { id: 2, label: "Photos" },
-  { id: 3, label: "Location" },
-  { id: 4, label: "Details" },
-  { id: 5, label: "Urgency" },
-  { id: 6, label: "Review" },
+  { id: 1, label: "Category", icon: ClipboardList },
+  { id: 2, label: "Photos", icon: Camera },
+  { id: 3, label: "Location", icon: MapPin },
+  { id: 4, label: "Details", icon: FileText },
+  { id: 5, label: "Urgency", icon: AlertTriangle },
+  { id: 6, label: "Review", icon: Check },
 ];
 
-export default function ReportNewIssueStep1() {
+export default function ReportNewIssueCategoryStep() {
   const [selected, setSelected] = useState<string>("");
   const selectedLabel = useMemo(
     () => categories.find((c) => c.id === selected)?.label ?? "",
@@ -126,19 +112,20 @@ export default function ReportNewIssueStep1() {
               {steps.map((step, index) => {
                 const isActive = step.id === 1;
                 const isDone = step.id < 1;
+                const Icon = step.icon;
                 return (
                   <div key={step.id} className="flex items-center gap-3">
                     <div
                       className={
                         "h-9 w-9 rounded-full border flex items-center justify-center text-sm font-semibold " +
                         (isActive
-                          ? "border-emerald-500 text-emerald-700 bg-emerald-50"
+                          ? "border-emerald-500 text-emerald-600 bg-emerald-50"
                           : isDone
                             ? "border-emerald-500 bg-emerald-500 text-white"
                             : "border-gray-200 text-gray-400")
                       }
                     >
-                      {isDone ? <Check className="w-4 h-4" /> : step.id}
+                      {isDone ? <Check className="w-4 h-4" /> : <Icon className="w-4 h-4" />}
                     </div>
                     <div className="text-sm">
                       <div className={isActive ? "font-semibold text-gray-900" : "text-gray-500"}>Step {step.id}</div>
@@ -159,7 +146,7 @@ export default function ReportNewIssueStep1() {
         </div>
 
         <div className="px-6 py-6">
-          <div className="rounded-2xl border border-gray-200 bg-gray-50/60 p-6">
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <div>
               <h3 className="text-base font-semibold text-gray-900">Select Issue Category</h3>
               <p className="text-sm text-gray-500">Choose the category that best describes your issue</p>
@@ -175,32 +162,25 @@ export default function ReportNewIssueStep1() {
                     type="button"
                     onClick={() => setSelected(category.id)}
                     className={
-                      "group rounded-xl border p-4 text-left transition-all hover:-translate-y-0.5 " +
-                      category.tone +
-                      (isSelected ? " ring-2 ring-emerald-500 shadow-sm" : "")
+                      "group rounded-2xl border px-4 py-5 text-center transition-all hover:-translate-y-0.5 hover:border-gray-300 " +
+                      (isSelected ? "border-emerald-500 bg-emerald-50/40 shadow-sm" : "border-gray-200 bg-white")
                     }
                   >
-                    <div
-                      className={
-                        "h-10 w-10 rounded-xl border border-white/60 flex items-center justify-center " +
-                        (isSelected ? "bg-white" : "bg-white/70")
-                      }
-                    >
-                      <Icon className={"w-5 h-5 " + category.iconTone} />
+                    <div className="mx-auto h-11 w-11 rounded-2xl border border-gray-200 bg-gray-50 flex items-center justify-center">
+                      <Icon className="h-6 w-6 text-gray-700" />
                     </div>
-                    <div className="mt-4 text-sm font-semibold text-gray-800">{category.label}</div>
-                    {isSelected ? (
-                      <div className="mt-2 text-xs font-semibold text-emerald-700">Selected</div>
-                    ) : null}
+                    <div className="mt-4 text-sm font-semibold text-gray-800 leading-tight">
+                      {category.label}
+                    </div>
                   </button>
                 );
               })}
             </div>
 
-            <div className="mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="mt-8 border-t border-gray-200 pt-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <button
                 type="button"
-                className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                className="inline-flex items-center justify-center rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 hover:border-blue-300 hover:bg-blue-50"
               >
                 Cancel
               </button>
@@ -209,18 +189,22 @@ export default function ReportNewIssueStep1() {
                 {selectedLabel ? (
                   <span className="text-xs text-gray-500">Selected: {selectedLabel}</span>
                 ) : null}
-                <button
-                  type="button"
-                  disabled={!selected}
-                  className={
-                    "inline-flex items-center justify-center rounded-lg px-5 py-2 text-sm font-semibold text-white transition-colors " +
-                    (selected
-                      ? "bg-emerald-500 hover:bg-emerald-600"
-                      : "bg-emerald-300 cursor-not-allowed")
-                  }
-                >
-                  Next
-                </button>
+                {selected ? (
+                  <Link
+                    href="/citizen/report-new-issue/upload-photos"
+                    className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+                  >
+                    Continue
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    className="inline-flex items-center justify-center rounded-lg bg-blue-300 px-5 py-2 text-sm font-semibold text-white cursor-not-allowed"
+                  >
+                    Continue
+                  </button>
+                )}
               </div>
             </div>
           </div>
