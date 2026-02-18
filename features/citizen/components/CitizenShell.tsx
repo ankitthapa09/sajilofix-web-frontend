@@ -1,6 +1,8 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 
 import CitizenSidebar from "@/features/citizen/components/CitizenSidebar";
@@ -11,6 +13,31 @@ type Props = {
 
 export default function CitizenShell({ children }: Props) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const pathname = usePathname() || "/citizen";
+
+  const headerConfig = React.useMemo(() => {
+    if (pathname.startsWith("/citizen/report-new-issue")) {
+      return {
+        title: "Report New Issue",
+        subtitle: "Help us identify and resolve community issues.",
+        showCta: false,
+      };
+    }
+
+    if (pathname.startsWith("/citizen/reports")) {
+      return {
+        title: "My Reports",
+        subtitle: "Track the status of your reported issues.",
+        showCta: true,
+      };
+    }
+
+    return {
+      title: "Dashboard Overview",
+      subtitle: "Welcome back! Here is whats happening with your reports.",
+      showCta: true,
+    };
+  }, [pathname]);
 
   React.useEffect(() => {
     if (!mobileOpen) return;
@@ -71,18 +98,21 @@ export default function CitizenShell({ children }: Props) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/logo.png" alt="logo" className="w-8 h-8 object-contain" />
                 <div className="min-w-0">
-                  <h1 className="text-base sm:text-xl font-semibold truncate">Dashboard Overview</h1>
-                  <p className="text-xs sm:text-sm text-gray-500 truncate">
-                    Welcome back! Here is whats happening with your reports.
-                  </p>
+                  <h1 className="text-base sm:text-xl font-semibold truncate">{headerConfig.title}</h1>
+                  <p className="text-xs sm:text-sm text-gray-500 truncate">{headerConfig.subtitle}</p>
                 </div>
               </div>
 
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
                 <button className="bg-white border border-gray-200 px-3 py-2 rounded-md">🔔</button>
-                <button className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base w-full sm:w-auto">
-                  Report New Issue
-                </button>
+                {headerConfig.showCta ? (
+                  <Link
+                    href="/citizen/report-new-issue"
+                    className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base w-full sm:w-auto text-center"
+                  >
+                    Report New Issue
+                  </Link>
+                ) : null}
               </div>
             </div>
           </header>

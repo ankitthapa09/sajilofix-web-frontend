@@ -203,6 +203,22 @@ function badgeForStatus(status: Status) {
 
 type ModalMode = "create" | "edit";
 
+type SelectedUser = {
+  fullName?: string;
+  email?: string;
+  role?: Role;
+  status?: Status;
+  profilePhoto?: string;
+  department?: string;
+  phone?: string;
+  wardNumber?: string;
+  municipality?: string;
+  district?: string;
+  tole?: string;
+  dob?: string;
+  citizenshipNumber?: string;
+};
+
 export default function AdminDashboard() {
   const [users, setUsers] = useState<AdminUserRow[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
@@ -218,6 +234,7 @@ export default function AdminDashboard() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [modalApiError, setModalApiError] = useState<string>("");
   const [modalLoading, setModalLoading] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<SelectedUser | null>(null);
 
   const {
     register,
@@ -319,6 +336,7 @@ export default function AdminDashboard() {
     setEditingId(null);
     setModalApiError("");
     setModalLoading(false);
+    setSelectedUser(null);
     reset({
       formMode: "create",
       fullName: "",
@@ -350,6 +368,14 @@ export default function AdminDashboard() {
     setEditingId(row.id);
     setModalApiError("");
     setModalLoading(true);
+    setSelectedUser({
+      fullName: row.fullName,
+      email: row.email,
+      role: row.role,
+      status: row.status,
+      profilePhoto: row.profilePhoto,
+      department: row.department === "—" ? "" : (row.department ?? ""),
+    });
 
     // Open first with skeleton; then hydrate from API
     reset({
@@ -373,6 +399,17 @@ export default function AdminDashboard() {
     try {
       if (row.role === "authority") {
         const detail = await adminGetAuthority(row.id);
+        setSelectedUser({
+          fullName: detail.fullName ?? row.fullName,
+          email: detail.email ?? row.email,
+          role: "authority",
+          status: detail.status ?? row.status,
+          profilePhoto: detail.profilePhoto,
+          department: detail.department ?? "",
+          phone: detail.phone,
+          wardNumber: detail.wardNumber,
+          municipality: detail.municipality,
+        });
         reset({
           formMode: "edit",
           fullName: detail.fullName ?? row.fullName,
@@ -393,6 +430,20 @@ export default function AdminDashboard() {
 
       if (row.role === "citizen") {
         const detail = await adminGetCitizen(row.id);
+        setSelectedUser({
+          fullName: detail.fullName ?? row.fullName,
+          email: detail.email ?? row.email,
+          role: "citizen",
+          status: detail.status ?? row.status,
+          profilePhoto: detail.profilePhoto,
+          phone: detail.phone,
+          wardNumber: detail.wardNumber,
+          municipality: detail.municipality,
+          district: detail.district,
+          tole: detail.tole,
+          dob: detail.dob,
+          citizenshipNumber: detail.citizenshipNumber,
+        });
         reset({
           formMode: "edit",
           fullName: detail.fullName ?? row.fullName,
@@ -937,8 +988,8 @@ export default function AdminDashboard() {
             aria-hidden="true"
           />
 
-          <div className="absolute inset-0 flex items-center justify-center px-4">
-            <div className="w-full max-w-lg bg-white rounded-xl shadow-xl border border-gray-200">
+          <div className="absolute inset-0 flex items-start justify-center px-4 py-6 overflow-y-auto">
+            <div className="w-full max-w-lg max-h-[90vh] bg-white rounded-xl shadow-xl border border-gray-200 flex flex-col overflow-hidden">
               <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div className="w-9 h-9 rounded-lg bg-green-50 text-green-600 flex items-center justify-center">
@@ -964,7 +1015,7 @@ export default function AdminDashboard() {
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit(submit)} className="p-6 space-y-4">
+              <form onSubmit={handleSubmit(submit)} className="p-6 space-y-4 overflow-y-auto">
                 {modalLoading && (
                   <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 flex items-center gap-3">
                     <div className="h-4 w-4 rounded-full border-2 border-gray-300 border-t-green-600 animate-spin" />
@@ -974,6 +1025,72 @@ export default function AdminDashboard() {
                 {modalApiError && (
                   <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                     {modalApiError}
+                  </div>
+                )}
+
+                {modalMode === "edit" && (
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                      {resolveProfilePhotoUrl(selectedUser?.profilePhoto) ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={resolveProfilePhotoUrl(selectedUser?.profilePhoto)}
+                          alt={selectedUser?.fullName || "User"}
+                          className="w-14 h-14 rounded-full object-cover border border-gray-200 bg-white"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-14 h-14 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 flex items-center justify-center font-semibold">
+                          {initialsFromName(selectedUser?.fullName || "")}
+                        </div>
+                      )}
+
+                      <div className="min-w-0">
+                        <div className="text-sm text-gray-500">Profile</div>
+                        <div className="text-lg font-semibold text-gray-900 truncate">
+                          {selectedUser?.fullName || "—"}
+                        </div>
+                        <div className="text-sm text-gray-600 truncate">
+                          {selectedUser?.email || "—"}
+                        </div>
+                      </div>
+
+                      <div className="sm:ml-auto flex items-center gap-2">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${badgeForRole(selectedUser?.role || "citizen")}`}>
+                          {roleLabel(selectedUser?.role || "citizen")}
+                        </span>
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${badgeForStatus(selectedUser?.status || "active")}`}>
+                          {selectedUser?.status === "suspended" ? "Suspended" : "Active"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm text-gray-700">
+                      <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
+                        <div className="text-xs text-gray-500">Phone</div>
+                        <div className="font-medium">{selectedUser?.phone || "—"}</div>
+                      </div>
+                      <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
+                        <div className="text-xs text-gray-500">Ward</div>
+                        <div className="font-medium">{selectedUser?.wardNumber || "—"}</div>
+                      </div>
+                      <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
+                        <div className="text-xs text-gray-500">Municipality</div>
+                        <div className="font-medium">{selectedUser?.municipality || "—"}</div>
+                      </div>
+                      <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
+                        <div className="text-xs text-gray-500">District</div>
+                        <div className="font-medium">{selectedUser?.district || "—"}</div>
+                      </div>
+                      <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
+                        <div className="text-xs text-gray-500">Tole</div>
+                        <div className="font-medium">{selectedUser?.tole || "—"}</div>
+                      </div>
+                      <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
+                        <div className="text-xs text-gray-500">Citizenship No.</div>
+                        <div className="font-medium">{selectedUser?.citizenshipNumber || "—"}</div>
+                      </div>
+                    </div>
                   </div>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
