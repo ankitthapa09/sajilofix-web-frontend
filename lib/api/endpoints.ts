@@ -15,4 +15,9 @@ export const API_ENDPOINTS = {
     meUpdate: "/api/users/me",
     mePhoto: "/api/users/me/photo",
   },
+  issues: {
+    list: "/api/issues",
+    create: "/api/issues",
+    get: (id: string) => `/api/issues/${id}`,
+  },
 } as const;
