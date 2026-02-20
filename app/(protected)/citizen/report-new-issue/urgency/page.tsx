@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -10,12 +10,23 @@ import {
   ClipboardList,
   MapPin,
   AlertTriangle,
+  Info,
+  AlertCircle,
 } from "lucide-react";
 
 type Step = {
   id: number;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
+};
+
+type UrgencyOption = {
+  id: "low" | "medium" | "high" | "urgent";
+  label: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  tone: string;
+  ring: string;
 };
 
 const steps: Step[] = [
@@ -27,12 +38,49 @@ const steps: Step[] = [
   { id: 6, label: "Review", icon: Check },
 ];
 
-export default function ReportNewIssueLocationStep() {
+const options: UrgencyOption[] = [
+  {
+    id: "low",
+    label: "Low Priority",
+    description: "Minor issue that can be addressed in normal timeframe",
+    icon: Info,
+    tone: "bg-blue-50/70 border-blue-200",
+    ring: "ring-blue-400",
+  },
+  {
+    id: "medium",
+    label: "Medium Priority",
+    description: "Moderate issue requiring attention within a few days",
+    icon: AlertCircle,
+    tone: "bg-amber-50/70 border-amber-200",
+    ring: "ring-amber-400",
+  },
+  {
+    id: "high",
+    label: "High Priority",
+    description: "Significant issue needing prompt resolution",
+    icon: AlertTriangle,
+    tone: "bg-orange-50/70 border-orange-200",
+    ring: "ring-orange-400",
+  },
+  {
+    id: "urgent",
+    label: "Urgent",
+    description: "Critical issue posing immediate safety or health risk",
+    icon: AlertTriangle,
+    tone: "bg-rose-50/70 border-rose-200",
+    ring: "ring-rose-400",
+  },
+];
+
+export default function ReportNewIssueUrgencyStep() {
+  const [selected, setSelected] = useState<UrgencyOption["id"]>("low");
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <Link
-          href="/citizen/report-new-issue/upload-photos"
+          href="/citizen/report-new-issue/details"
           className="inline-flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-900"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -40,7 +88,7 @@ export default function ReportNewIssueLocationStep() {
         </Link>
 
         <div className="flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-          Step 3 of 6
+          Step 5 of 6
         </div>
       </div>
 
@@ -54,8 +102,8 @@ export default function ReportNewIssueLocationStep() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-4">
               {steps.map((step, index) => {
-                const isActive = step.id === 3;
-                const isDone = step.id < 3;
+                const isActive = step.id === 5;
+                const isDone = step.id < 5;
                 const Icon = step.icon;
                 return (
                   <div key={step.id} className="flex items-center gap-3">
@@ -92,88 +140,59 @@ export default function ReportNewIssueLocationStep() {
         <div className="px-6 py-6">
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <div>
-              <h3 className="text-base font-semibold text-gray-900">Specify Location</h3>
-              <p className="text-sm text-gray-500">Help us locate the issue precisely</p>
+              <h3 className="text-base font-semibold text-gray-900">Set Urgency Level</h3>
+              <p className="text-sm text-gray-500">Help us prioritize and respond to your issue appropriately</p>
             </div>
 
-            <div className="mt-6 rounded-2xl border border-gray-200 bg-slate-100/70 px-6 py-10 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-blue-600">
-                <MapPin className="h-6 w-6" />
-              </div>
-              <div className="mt-3 text-sm font-semibold text-gray-800">Interactive Map</div>
-              <div className="text-xs text-gray-500">Click to pin exact location</div>
-              <div className="mt-4 inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm">
-                Selected: Thamel, Kathmandu
-              </div>
+            <div className="mt-5 space-y-3">
+              {options.map((option) => {
+                const Icon = option.icon;
+                const isSelected = selected === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setSelected(option.id)}
+                    className={
+                      "w-full rounded-2xl border px-4 py-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm " +
+                      option.tone +
+                      (isSelected ? " ring-2 " + option.ring : "")
+                    }
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 h-9 w-9 rounded-full border border-gray-200 bg-white flex items-center justify-center">
+                        <Icon className="h-5 w-5 text-gray-700" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold text-gray-900">{option.label}</div>
+                        <div className="text-xs text-gray-600">{option.description}</div>
+                      </div>
+                      {isSelected ? (
+                        <div className="ml-auto flex items-center gap-2 text-sm font-semibold text-emerald-600">
+                          <Check className="h-4 w-4" />
+                        </div>
+                      ) : null}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
 
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-semibold text-gray-800">Latitude</label>
-                <input
-                  defaultValue="27.7172"
-                  className="mt-1 h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-gray-800">Longitude</label>
-                <input
-                  defaultValue="85.3240"
-                  className="mt-1 h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700"
-                />
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <label className="text-sm font-semibold text-gray-800">Location Address</label>
-              <input
-                placeholder="e.g., Thamel, Ward 26, Kathmandu"
-                className="mt-1 h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700"
-              />
-            </div>
-
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="text-sm font-semibold text-gray-800">District</label>
-                <input
-                  placeholder="e.g., Kathmandu"
-                  className="mt-1 h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-gray-800">Municipality</label>
-                <input
-                  placeholder="e.g., Kathmandu Metropolitan"
-                  className="mt-1 h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-gray-800">Ward</label>
-                <input
-                  placeholder="e.g., 26"
-                  className="mt-1 h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700"
-                />
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <label className="text-sm font-semibold text-gray-800">Nearby Landmark (Optional)</label>
-              <input
-                placeholder="e.g., Near Kathmandu Guest House"
-                className="mt-1 h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700"
-              />
+            <div className="mt-4 rounded-xl border border-blue-400 bg-blue-50/70 px-4 py-3 text-sm text-blue-800">
+              <span className="font-semibold">Note:</span> Urgent issues will be prioritized for immediate attention. Please only mark as
+              urgent if the issue poses immediate safety or health risks.
             </div>
 
             <div className="mt-6 border-t border-gray-200 pt-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <Link
-                href="/citizen/report-new-issue/upload-photos"
+                href="/citizen/report-new-issue/details"
                 className="inline-flex items-center justify-center rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 hover:border-blue-300 hover:bg-blue-50"
               >
                 Previous
               </Link>
 
               <Link
-                href="/citizen/report-new-issue/details"
+                href="/citizen/report-new-issue/review"
                 className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
               >
                 Continue
@@ -181,7 +200,7 @@ export default function ReportNewIssueLocationStep() {
             </div>
           </div>
         </div>
-       </section>
-     </div>
-   );
- }
+      </section>
+    </div>
+  );
+}
