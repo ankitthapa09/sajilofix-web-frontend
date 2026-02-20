@@ -2,6 +2,28 @@ import { apiClient } from "./axios";
 import { API_ENDPOINTS } from "./endpoints";
 import type { IssueDraft } from "@/features/citizen/components/ReportIssueProvider";
 
+export type IssueLocation = {
+  latitude?: number;
+  longitude?: number;
+  address: string;
+  district?: string;
+  municipality?: string;
+  ward?: string;
+  landmark?: string;
+};
+
+export type IssueListItem = {
+  id: string;
+  category: string;
+  title: string;
+  description: string;
+  urgency: string;
+  status: string;
+  location: IssueLocation;
+  photos: string[];
+  createdAt: string;
+};
+
 function unwrapError(error: unknown, fallback: string) {
   const err = error as { response?: { data?: { message?: string } }; message?: string };
   return err.response?.data?.message || err.message || fallback;
@@ -52,5 +74,23 @@ export async function createIssueReport(draft: IssueDraft) {
     return resp.data as { success?: boolean; message?: string; data?: unknown };
   } catch (error: unknown) {
     throw new Error(unwrapError(error, "Failed to submit issue"));
+  }
+}
+
+export async function listIssueReports() {
+  try {
+    const resp = await apiClient.get(API_ENDPOINTS.issues.list);
+    return (resp.data?.data ?? []) as IssueListItem[];
+  } catch (error: unknown) {
+    throw new Error(unwrapError(error, "Failed to load reports"));
+  }
+}
+
+export async function getIssueReport(id: string) {
+  try {
+    const resp = await apiClient.get(API_ENDPOINTS.issues.get(id));
+    return resp.data?.data as IssueListItem;
+  } catch (error: unknown) {
+    throw new Error(unwrapError(error, "Failed to load report"));
   }
 }
