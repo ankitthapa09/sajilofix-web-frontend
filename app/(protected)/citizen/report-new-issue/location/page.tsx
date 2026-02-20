@@ -11,6 +11,7 @@ import {
   MapPin,
   AlertTriangle,
 } from "lucide-react";
+import { useReportIssue } from "@/features/citizen/components/ReportIssueProvider";
 
 type Step = {
   id: number;
@@ -28,6 +29,8 @@ const steps: Step[] = [
 ];
 
 export default function ReportNewIssueLocationStep() {
+  const { draft, updateLocation } = useReportIssue();
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
@@ -111,14 +114,16 @@ export default function ReportNewIssueLocationStep() {
               <div>
                 <label className="text-sm font-semibold text-gray-800">Latitude</label>
                 <input
-                  defaultValue="27.7172"
+                  value={draft.location.latitude}
+                  onChange={(event) => updateLocation({ latitude: event.target.value })}
                   className="mt-1 h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700"
                 />
               </div>
               <div>
                 <label className="text-sm font-semibold text-gray-800">Longitude</label>
                 <input
-                  defaultValue="85.3240"
+                  value={draft.location.longitude}
+                  onChange={(event) => updateLocation({ longitude: event.target.value })}
                   className="mt-1 h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700"
                 />
               </div>
@@ -128,6 +133,8 @@ export default function ReportNewIssueLocationStep() {
               <label className="text-sm font-semibold text-gray-800">Location Address</label>
               <input
                 placeholder="e.g., Thamel, Ward 26, Kathmandu"
+                value={draft.location.address}
+                onChange={(event) => updateLocation({ address: event.target.value })}
                 className="mt-1 h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700"
               />
             </div>
@@ -137,6 +144,8 @@ export default function ReportNewIssueLocationStep() {
                 <label className="text-sm font-semibold text-gray-800">District</label>
                 <input
                   placeholder="e.g., Kathmandu"
+                  value={draft.location.district}
+                  onChange={(event) => updateLocation({ district: event.target.value })}
                   className="mt-1 h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700"
                 />
               </div>
@@ -144,6 +153,8 @@ export default function ReportNewIssueLocationStep() {
                 <label className="text-sm font-semibold text-gray-800">Municipality</label>
                 <input
                   placeholder="e.g., Kathmandu Metropolitan"
+                  value={draft.location.municipality}
+                  onChange={(event) => updateLocation({ municipality: event.target.value })}
                   className="mt-1 h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700"
                 />
               </div>
@@ -151,6 +162,8 @@ export default function ReportNewIssueLocationStep() {
                 <label className="text-sm font-semibold text-gray-800">Ward</label>
                 <input
                   placeholder="e.g., 26"
+                  value={draft.location.ward}
+                  onChange={(event) => updateLocation({ ward: event.target.value })}
                   className="mt-1 h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700"
                 />
               </div>
@@ -160,6 +173,8 @@ export default function ReportNewIssueLocationStep() {
               <label className="text-sm font-semibold text-gray-800">Nearby Landmark (Optional)</label>
               <input
                 placeholder="e.g., Near Kathmandu Guest House"
+                value={draft.location.landmark}
+                onChange={(event) => updateLocation({ landmark: event.target.value })}
                 className="mt-1 h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700"
               />
             </div>

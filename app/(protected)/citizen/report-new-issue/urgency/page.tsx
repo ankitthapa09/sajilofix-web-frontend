@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -13,6 +13,7 @@ import {
   Info,
   AlertCircle,
 } from "lucide-react";
+import { useReportIssue } from "@/features/citizen/components/ReportIssueProvider";
 
 type Step = {
   id: number;
@@ -26,7 +27,7 @@ type UrgencyOption = {
   description: string;
   icon: React.ComponentType<{ className?: string }>;
   tone: string;
-  ring: string;
+  iconTone: string;
 };
 
 const steps: Step[] = [
@@ -44,37 +45,44 @@ const options: UrgencyOption[] = [
     label: "Low Priority",
     description: "Minor issue that can be addressed in normal timeframe",
     icon: Info,
-    tone: "bg-blue-50/70 border-blue-200",
-    ring: "ring-blue-400",
+    tone: "bg-blue-50/80 border-blue-200",
+    iconTone: "text-blue-600",
   },
   {
     id: "medium",
     label: "Medium Priority",
     description: "Moderate issue requiring attention within a few days",
     icon: AlertCircle,
-    tone: "bg-amber-50/70 border-amber-200",
-    ring: "ring-amber-400",
+    tone: "bg-amber-50/80 border-amber-200",
+    iconTone: "text-amber-600",
   },
   {
     id: "high",
     label: "High Priority",
     description: "Significant issue needing prompt resolution",
     icon: AlertTriangle,
-    tone: "bg-orange-50/70 border-orange-200",
-    ring: "ring-orange-400",
+    tone: "bg-orange-50/80 border-orange-200",
+    iconTone: "text-orange-600",
   },
   {
     id: "urgent",
     label: "Urgent",
     description: "Critical issue posing immediate safety or health risk",
     icon: AlertTriangle,
-    tone: "bg-rose-50/70 border-rose-200",
-    ring: "ring-rose-400",
+    tone: "bg-rose-50/80 border-rose-200",
+    iconTone: "text-rose-600",
   },
 ];
 
 export default function ReportNewIssueUrgencyStep() {
-  const [selected, setSelected] = useState<UrgencyOption["id"]>("low");
+  const { draft, setUrgency } = useReportIssue();
+  const selected = draft.urgency ?? "low";
+
+  useEffect(() => {
+    if (!draft.urgency) {
+      setUrgency("low");
+    }
+  }, [draft.urgency, setUrgency]);
 
   return (
     <div className="space-y-6">
@@ -152,23 +160,23 @@ export default function ReportNewIssueUrgencyStep() {
                   <button
                     key={option.id}
                     type="button"
-                    onClick={() => setSelected(option.id)}
+                    onClick={() => setUrgency(option.id)}
                     className={
-                      "w-full rounded-2xl border px-4 py-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm " +
+                      "w-full rounded-2xl border px-4 py-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-sm hover:border-blue-300 " +
                       option.tone +
-                      (isSelected ? " ring-2 " + option.ring : "")
+                      (isSelected ? " ring-2 ring-blue-400 border-blue-400" : "")
                     }
                   >
                     <div className="flex items-start gap-3">
-                      <div className="mt-0.5 h-9 w-9 rounded-full border border-gray-200 bg-white flex items-center justify-center">
-                        <Icon className="h-5 w-5 text-gray-700" />
+                      <div className="mt-0.5 h-9 w-9 rounded-full border border-white bg-white/70 flex items-center justify-center">
+                        <Icon className={`h-5 w-5 ${option.iconTone}`} />
                       </div>
                       <div>
                         <div className="text-sm font-semibold text-gray-900">{option.label}</div>
                         <div className="text-xs text-gray-600">{option.description}</div>
                       </div>
                       {isSelected ? (
-                        <div className="ml-auto flex items-center gap-2 text-sm font-semibold text-emerald-600">
+                        <div className="ml-auto flex items-center justify-center h-7 w-7 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600">
                           <Check className="h-4 w-4" />
                         </div>
                       ) : null}
@@ -178,9 +186,14 @@ export default function ReportNewIssueUrgencyStep() {
               })}
             </div>
 
-            <div className="mt-4 rounded-xl border border-blue-400 bg-blue-50/70 px-4 py-3 text-sm text-blue-800">
-              <span className="font-semibold">Note:</span> Urgent issues will be prioritized for immediate attention. Please only mark as
-              urgent if the issue poses immediate safety or health risks.
+            <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50/70 px-4 py-3 text-sm text-blue-800 flex items-start gap-2">
+              <div className="mt-0.5 h-6 w-6 rounded-full border border-blue-200 bg-white text-blue-600 flex items-center justify-center">
+                <Info className="h-3.5 w-3.5" />
+              </div>
+              <span>
+                <span className="font-semibold">Note:</span> Urgent issues will be prioritized for immediate attention. Please only mark as
+                urgent if the issue poses immediate safety or health risks.
+              </span>
             </div>
 
             <div className="mt-6 border-t border-gray-200 pt-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">

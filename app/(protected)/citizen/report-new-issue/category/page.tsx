@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ClipboardList,
@@ -18,9 +19,10 @@ import {
   Car,
   Check,
 } from "lucide-react";
+import { useReportIssue, type IssueCategory } from "@/features/citizen/components/ReportIssueProvider";
 
 type Category = {
-  id: string;
+  id: IssueCategory;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
 };
@@ -78,7 +80,9 @@ const steps = [
 ];
 
 export default function ReportNewIssueCategoryStep() {
-  const [selected, setSelected] = useState<string>("");
+  const router = useRouter();
+  const { draft, setCategory, resetDraft } = useReportIssue();
+  const selected = draft.category ?? "";
   const selectedLabel = useMemo(
     () => categories.find((c) => c.id === selected)?.label ?? "",
     [selected]
@@ -160,7 +164,7 @@ export default function ReportNewIssueCategoryStep() {
                   <button
                     key={category.id}
                     type="button"
-                    onClick={() => setSelected(category.id)}
+                    onClick={() => setCategory(category.id)}
                     className={
                       "group rounded-2xl border px-4 py-5 text-center transition-all hover:-translate-y-0.5 hover:border-gray-300 " +
                       (isSelected ? "border-blue-500 bg-blue-50/40 shadow-sm" : "border-gray-200 bg-white")
@@ -180,6 +184,10 @@ export default function ReportNewIssueCategoryStep() {
             <div className="mt-8 border-t border-gray-200 pt-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <button
                 type="button"
+                onClick={() => {
+                  resetDraft();
+                  router.push("/citizen");
+                }}
                 className="inline-flex items-center justify-center rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 hover:border-blue-300 hover:bg-blue-50"
               >
                 Cancel

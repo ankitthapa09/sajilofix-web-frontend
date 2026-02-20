@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -10,9 +10,9 @@ import {
   ClipboardList,
   MapPin,
   AlertTriangle,
-  FileText,
   Info,
 } from "lucide-react";
+import { useReportIssue } from "@/features/citizen/components/ReportIssueProvider";
 
 type Step = {
   id: number;
@@ -30,9 +30,8 @@ const steps: Step[] = [
 ];
 
 export default function ReportNewIssueDetailsStep() {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const count = useMemo(() => description.length, [description]);
+  const { draft, updateDetails } = useReportIssue();
+  const count = useMemo(() => draft.details.description.length, [draft.details.description]);
 
   return (
     <div className="space-y-6">
@@ -105,8 +104,8 @@ export default function ReportNewIssueDetailsStep() {
             <div className="mt-5">
               <label className="text-sm font-semibold text-gray-800">Issue Title</label>
               <input
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
+                value={draft.details.title}
+                onChange={(event) => updateDetails({ title: event.target.value })}
                 placeholder="e.g., Broken Street Light"
                 className="mt-1 h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700"
               />
@@ -115,8 +114,8 @@ export default function ReportNewIssueDetailsStep() {
             <div className="mt-4">
               <label className="text-sm font-semibold text-gray-800">Detailed Description</label>
               <textarea
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
+                value={draft.details.description}
+                onChange={(event) => updateDetails({ description: event.target.value })}
                 placeholder="Describe the issue in detail. When did it occur? How severe is it? Any safety concerns?"
                 className="mt-1 min-h-[120px] w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
               />

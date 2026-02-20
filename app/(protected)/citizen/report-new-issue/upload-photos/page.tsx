@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   UploadCloud,
 } from "lucide-react";
+import { useReportIssue } from "@/features/citizen/components/ReportIssueProvider";
 
 type Step = {
   id: number;
@@ -29,7 +30,8 @@ const steps: Step[] = [
 ];
 
 export default function ReportNewIssueUploadPhotosStep() {
-  const [files, setFiles] = useState<File[]>([]);
+  const { draft, setPhotos } = useReportIssue();
+  const files = draft.photos;
 
   const fileLabel = useMemo(() => {
     if (!files.length) return "";
@@ -112,8 +114,8 @@ export default function ReportNewIssueUploadPhotosStep() {
                 accept="image/png,image/jpeg"
                 multiple
                 onChange={(event) => {
-                  const list = Array.from(event.target.files ?? []);
-                  setFiles(list);
+                  const list = Array.from(event.target.files ?? []).slice(0, 3);
+                  setPhotos(list);
                 }}
               />
               <div className="rounded-2xl border border-dashed border-gray-300 bg-white/70 px-6 py-10 text-center hover:border-emerald-300 hover:bg-emerald-50/30 transition-colors">
