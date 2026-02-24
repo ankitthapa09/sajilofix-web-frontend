@@ -37,14 +37,13 @@ const steps: Step[] = [
 ];
 
 const CATEGORY_LABELS: Record<IssueCategory, string> = {
-  road: "Road Damage",
-  lighting: "Street Lighting",
-  waste: "Waste Management",
-  water: "Water Supply",
-  drainage: "Drainage",
-  parks: "Public Parks",
-  traffic: "Traffic Signals",
-  other: "Other",
+  roads_potholes: "Roads & Potholes",
+  electricity: "Electricity",
+  water_supply: "Water Supply",
+  waste_management: "Waste Management",
+  street_lights: "Street Lights",
+  public_infrastructure: "Public Infrastructure",
+  others: "Others",
 };
 
 const URGENCY_LABELS: Record<IssueUrgency, { label: string; description: string }> = {

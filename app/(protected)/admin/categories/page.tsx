@@ -18,12 +18,13 @@ function statusPill(status: CategoryCard["status"]) {
 export default function AdminCategoriesPage() {
   const seed = useMemo<CategoryCard[]>(
     () => [
-      { id: "c1", name: "Road Maintenance", icon: "🛣️", issueCount: 45, status: "active" },
-      { id: "c2", name: "Street Lighting", icon: "💡", issueCount: 32, status: "active" },
-      { id: "c3", name: "Waste Management", icon: "♻️", issueCount: 28, status: "active" },
-      { id: "c4", name: "Water Supply", icon: "💧", issueCount: 19, status: "active" },
-      { id: "c5", name: "Drainage", icon: "🌊", issueCount: 15, status: "active" },
-      { id: "c6", name: "Parks & Recreation", icon: "🌳", issueCount: 12, status: "active" },
+      { id: "c1", name: "Roads & Potholes", icon: "🛣️", issueCount: 45, status: "active" },
+      { id: "c2", name: "Electricity", icon: "⚡️", issueCount: 18, status: "active" },
+      { id: "c3", name: "Water Supply", icon: "💧", issueCount: 19, status: "active" },
+      { id: "c4", name: "Waste Management", icon: "♻️", issueCount: 28, status: "active" },
+      { id: "c5", name: "Street Lights", icon: "💡", issueCount: 32, status: "active" },
+      { id: "c6", name: "Public Infrastructure", icon: "🏗️", issueCount: 12, status: "active" },
+      { id: "c7", name: "Others", icon: "🧩", issueCount: 4, status: "active" },
     ],
     [],
   );

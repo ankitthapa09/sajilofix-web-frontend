@@ -5,13 +5,24 @@ import Link from "next/link";
 import { Filter, Search } from "lucide-react";
 import { listIssueReports, type IssueListItem } from "@/lib/api/issues";
 
+const CATEGORY_LABELS: Record<string, string> = {
+  roads_potholes: "Roads & Potholes",
+  electricity: "Electricity",
+  water_supply: "Water Supply",
+  waste_management: "Waste Management",
+  street_lights: "Street Lights",
+  public_infrastructure: "Public Infrastructure",
+  others: "Others",
+};
+
 function formatCategory(value: string) {
-  return value
-    .replace(/[_-]+/g, " ")
-    .split(" ")
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+  return CATEGORY_LABELS[value] ??
+    value
+      .replace(/[_-]+/g, " ")
+      .split(" ")
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
 }
 
 const URGENCY_STYLES: Record<string, { label: string; tone: string }> = {

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 import {
   ArrowLeft,
@@ -51,13 +52,24 @@ function formatDateTime(value: string) {
   });
 }
 
+const CATEGORY_LABELS: Record<string, string> = {
+  roads_potholes: "Roads & Potholes",
+  electricity: "Electricity",
+  water_supply: "Water Supply",
+  waste_management: "Waste Management",
+  street_lights: "Street Lights",
+  public_infrastructure: "Public Infrastructure",
+  others: "Others",
+};
+
 function formatCategory(value: string) {
-  return value
-    .replace(/[_-]+/g, " ")
-    .split(" ")
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+  return CATEGORY_LABELS[value] ??
+    value
+      .replace(/[_-]+/g, " ")
+      .split(" ")
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" ");
 }
 
 function formatLocation(issue: IssueListItem) {
@@ -243,9 +255,11 @@ export default function ReportDetailsPage() {
               {hasPhotos ? (
                 <div className="mt-4 space-y-4">
                   <div className="relative overflow-hidden rounded-2xl border border-gray-200">
-                    <img
+                    <Image
                       src={activePhotoUrl}
                       alt="Issue evidence"
+                      width={600}
+                      height={256}
                       className="h-64 w-full object-cover"
                     />
                     {photos.length > 1 ? (
@@ -285,9 +299,11 @@ export default function ReportDetailsPage() {
                             (isActive ? "border-blue-500" : "border-gray-200")
                           }
                         >
-                          <img
+                          <Image
                             src={thumbUrl}
                             alt={`Thumbnail ${index + 1}`}
+                            width={100}
+                            height={64}
                             className="h-16 w-full object-cover"
                           />
                         </button>
@@ -332,7 +348,7 @@ export default function ReportDetailsPage() {
                     <li key={step.title} className="relative pl-8">
                       <span
                         className={
-                          "absolute left-[-13px] top-0 flex h-7 w-7 items-center justify-center rounded-full border " +
+                          "absolute -left-3.25 top-0 flex h-7 w-7 items-center justify-center rounded-full border " +
                           (isDone
                             ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                             : "border-gray-200 bg-gray-50 text-gray-500")
