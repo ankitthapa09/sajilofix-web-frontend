@@ -3,14 +3,13 @@
 import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
 
 export type IssueCategory =
-  | "road"
-  | "lighting"
-  | "waste"
-  | "water"
-  | "drainage"
-  | "parks"
-  | "traffic"
-  | "other";
+  | "roads_potholes"
+  | "electricity"
+  | "water_supply"
+  | "waste_management"
+  | "street_lights"
+  | "public_infrastructure"
+  | "others";
 
 export type IssueUrgency = "low" | "medium" | "high" | "urgent";
 

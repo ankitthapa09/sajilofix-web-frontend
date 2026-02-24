@@ -2,6 +2,7 @@ import { apiClient } from "./axios";
 import { API_ENDPOINTS } from "./endpoints";
 
 type Role = "admin" | "authority" | "citizen";
+type Status = "active" | "suspended";
 
 type MeUser = {
   id: string;
@@ -18,6 +19,7 @@ type MeUser = {
   citizenshipNumber?: string;
   profilePhoto?: string;
   role: Role;
+  status?: Status;
 };
 
 type GetMeResponse = {

@@ -65,7 +65,7 @@ export default function AdminIssueManagementPage() {
       {
         id: "i1",
         issue: "Broken Street Light",
-        category: "Street Lighting",
+        category: "Street Lights",
         location: "Thamel, Ward 26",
         priority: "high",
         status: "pending",
@@ -75,7 +75,7 @@ export default function AdminIssueManagementPage() {
       {
         id: "i2",
         issue: "Pothole on Main Road",
-        category: "Road Maintenance",
+        category: "Roads & Potholes",
         location: "New Baneshwor",
         priority: "urgent",
         status: "in-progress",

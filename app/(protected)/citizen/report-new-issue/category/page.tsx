@@ -15,8 +15,6 @@ import {
   Lightbulb,
   Recycle,
   Trees,
-  Waves,
-  Car,
   Check,
 } from "lucide-react";
 import { useReportIssue, type IssueCategory } from "@/features/citizen/components/ReportIssueProvider";
@@ -29,43 +27,38 @@ type Category = {
 
 const categories: Category[] = [
   {
-    id: "road",
-    label: "Road Maintenance",
+    id: "roads_potholes",
+    label: "Roads & Potholes",
     icon: Construction,
   },
   {
-    id: "lighting",
-    label: "Street Lighting",
+    id: "electricity",
+    label: "Electricity",
     icon: Lightbulb,
   },
   {
-    id: "waste",
-    label: "Waste Management",
-    icon: Recycle,
-  },
-  {
-    id: "water",
+    id: "water_supply",
     label: "Water Supply",
     icon: Droplet,
   },
   {
-    id: "drainage",
-    label: "Drainage",
-    icon: Waves,
+    id: "waste_management",
+    label: "Waste Management",
+    icon: Recycle,
   },
   {
-    id: "parks",
-    label: "Parks & Recreation",
+    id: "street_lights",
+    label: "Street Lights",
+    icon: Lightbulb,
+  },
+  {
+    id: "public_infrastructure",
+    label: "Public Infrastructure",
     icon: Trees,
   },
   {
-    id: "traffic",
-    label: "Traffic & Parking",
-    icon: Car,
-  },
-  {
-    id: "other",
-    label: "Other",
+    id: "others",
+    label: "Others",
     icon: ClipboardList,
   },
 ];
