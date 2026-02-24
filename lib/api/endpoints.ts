@@ -19,5 +19,6 @@ export const API_ENDPOINTS = {
     list: "/api/issues",
     create: "/api/issues",
     get: (id: string) => `/api/issues/${id}`,
+    updateStatus: (id: string) => `/api/issues/${id}/status`,
   },
 } as const;

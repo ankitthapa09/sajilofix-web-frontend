@@ -22,6 +22,8 @@ export type IssueListItem = {
   location: IssueLocation;
   photos: string[];
   createdAt: string;
+  reporterId?: string;
+  reporterName?: string;
 };
 
 function unwrapError(error: unknown, fallback: string) {
@@ -83,6 +85,24 @@ export async function listIssueReports() {
     return (resp.data?.data ?? []) as IssueListItem[];
   } catch (error: unknown) {
     throw new Error(unwrapError(error, "Failed to load reports"));
+  }
+}
+
+export async function listAuthorityIssues() {
+  try {
+    const resp = await apiClient.get(API_ENDPOINTS.issues.list);
+    return (resp.data?.data ?? []) as IssueListItem[];
+  } catch (error: unknown) {
+    throw new Error(unwrapError(error, "Failed to load issues"));
+  }
+}
+
+export async function updateIssueStatus(id: string, status: string) {
+  try {
+    const resp = await apiClient.patch(API_ENDPOINTS.issues.updateStatus(id), { status });
+    return resp.data as { success?: boolean; message?: string; data?: unknown };
+  } catch (error: unknown) {
+    throw new Error(unwrapError(error, "Failed to update status"));
   }
 }
 
