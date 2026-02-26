@@ -55,9 +55,9 @@ function formatLocation(issue: IssueListItem) {
   return parts.length ? parts.join(", ") : "-";
 }
 
-function formatReportId(index: number) {
-  const num = index + 1;
-  return `RPT-${String(num).padStart(3, "0")}`;
+function formatReportId(index: number, total: number) {
+  const value = Math.max(total - index, 1);
+  return `RPT-${String(value).padStart(3, "0")}`;
 }
 
 export default function ReportsPage() {
@@ -187,7 +187,7 @@ export default function ReportsPage() {
                     return (
                       <tr key={issue.id} className="text-gray-700">
                         <td className="px-3 py-3 text-emerald-600 font-semibold">
-                          {formatReportId(index)}
+                          {formatReportId(index, filtered.length)}
                         </td>
                         <td className="px-3 py-3 font-medium text-gray-800">{issue.title}</td>
                         <td className="px-3 py-3 text-gray-600">{formatCategory(issue.category)}</td>

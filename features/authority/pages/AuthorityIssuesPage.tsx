@@ -70,8 +70,9 @@ function formatDaysOpen(createdAt: string) {
   return `${days}d`;
 }
 
-function formatIssueId(index: number) {
-  return `RPT-${String(index + 1).padStart(3, "0")}`;
+function formatIssueId(index: number, total: number) {
+  const value = Math.max(total - index, 1);
+  return `RPT-${String(value).padStart(3, "0")}`;
 }
 
 export default function AuthorityIssuesPage() {
@@ -107,7 +108,7 @@ export default function AuthorityIssuesPage() {
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    return issues.filter((issue) => {
+    const base = issues.filter((issue) => {
       if (categoryFilter !== "all" && issue.category !== categoryFilter) return false;
 
       if (!normalized) return true;
@@ -123,6 +124,9 @@ export default function AuthorityIssuesPage() {
         .join(" ")
         .toLowerCase();
       return haystack.includes(normalized);
+    });
+    return [...base].sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
   }, [issues, query, categoryFilter]);
 
@@ -220,7 +224,7 @@ export default function AuthorityIssuesPage() {
 
                     return (
                       <tr key={issue.id} className="text-gray-700">
-                        <td className="px-3 py-3 text-blue-600 font-semibold">{formatIssueId(index)}</td>
+                        <td className="px-3 py-3 text-blue-600 font-semibold">{formatIssueId(index, filtered.length)}</td>
                         <td className="px-3 py-3 font-medium text-gray-800">{issue.title}</td>
                         <td className="px-3 py-3 text-gray-600">{formatCategory(issue.category)}</td>
                         <td className="px-3 py-3 text-gray-600">{formatLocation(issue)}</td>
