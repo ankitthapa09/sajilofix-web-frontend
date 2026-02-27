@@ -97,6 +97,15 @@ export async function listAuthorityIssues() {
   }
 }
 
+export async function listPriorityIssues() {
+  try {
+    const resp = await apiClient.get(API_ENDPOINTS.issues.priority);
+    return (resp.data?.data ?? []) as IssueListItem[];
+  } catch (error: unknown) {
+    throw new Error(unwrapError(error, "Failed to load priority issues"));
+  }
+}
+
 export async function updateIssueStatus(id: string, status: string) {
   try {
     const resp = await apiClient.patch(API_ENDPOINTS.issues.updateStatus(id), { status });

@@ -18,6 +18,7 @@ export const API_ENDPOINTS = {
   issues: {
     list: "/api/issues",
     create: "/api/issues",
+    priority: "/api/issues/priority",
     get: (id: string) => `/api/issues/${id}`,
     updateStatus: (id: string) => `/api/issues/${id}/status`,
   },
