@@ -44,3 +44,15 @@ body {
 .animate-float {
   animation: float 6s ease-in-out infinite;
 }
+
+/* Leaflet compatibility with Tailwind preflight */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+}
+
+.leaflet-container .leaflet-tile,
+.leaflet-container .leaflet-marker-icon,
+.leaflet-container .leaflet-marker-shadow {
+  max-width: none !important;
+}

@@ -46,9 +46,7 @@ export default function AuthoritySidebar({
     <aside className={asideClassName}>
       <div className="px-5 py-5 border-b border-gray-100">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-            <LayoutDashboard className="h-5 w-5" />
-          </div>
+          <img src="/logo.png" alt="logo" className="w-16 h-10 object-contain" />
           <div className="leading-tight">
             <div className="text-base font-semibold text-gray-900">Sajilo Fix</div>
             <div className="text-xs text-gray-500">Authority Portal</div>

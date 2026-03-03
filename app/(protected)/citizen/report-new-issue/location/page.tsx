@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
   ArrowLeft,
   Camera,
@@ -12,6 +13,11 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { useReportIssue } from "@/features/citizen/components/ReportIssueProvider";
+
+const IssueMapClient = dynamic(() => import("@/features/shared/map/IssueMapClient"), {
+  ssr: false,
+  loading: () => <div className="mt-6 h-80 animate-pulse rounded-2xl border border-gray-200 bg-gray-100" />,
+});
 
 type Step = {
   id: number;
@@ -30,6 +36,13 @@ const steps: Step[] = [
 
 export default function ReportNewIssueLocationStep() {
   const { draft, updateLocation } = useReportIssue();
+
+  const lat = Number(draft.location.latitude);
+  const lng = Number(draft.location.longitude);
+  const pickedLocation =
+    Number.isFinite(lat) && Number.isFinite(lng)
+      ? { latitude: lat, longitude: lng }
+      : null;
 
   return (
     <div className="space-y-6">
@@ -99,14 +112,27 @@ export default function ReportNewIssueLocationStep() {
               <p className="text-sm text-gray-500">Help us locate the issue precisely</p>
             </div>
 
-            <div className="mt-6 rounded-2xl border border-gray-200 bg-slate-100/70 px-6 py-10 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-blue-200 bg-blue-50 text-blue-600">
-                <MapPin className="h-6 w-6" />
-              </div>
-              <div className="mt-3 text-sm font-semibold text-gray-800">Interactive Map</div>
-              <div className="text-xs text-gray-500">Click to pin exact location</div>
-              <div className="mt-4 inline-flex items-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 shadow-sm">
-                Selected: Thamel, Kathmandu
+            <div className="mt-6 rounded-2xl border border-gray-200 bg-slate-100/70 p-3">
+              <IssueMapClient
+                pickMode
+                pickedLocation={pickedLocation}
+                onPickLocation={(latitude, longitude) =>
+                  updateLocation({
+                    latitude: latitude.toFixed(6),
+                    longitude: longitude.toFixed(6),
+                  })
+                }
+                className="h-80 w-full overflow-hidden rounded-xl border border-gray-200"
+              />
+              <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-600">
+                <div className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 font-semibold text-blue-700">
+                  <MapPin className="h-3.5 w-3.5" /> Click map to pin exact location
+                </div>
+                <div className="rounded-full border border-gray-200 bg-white px-2.5 py-1 font-semibold">
+                  {pickedLocation
+                    ? `Selected: ${pickedLocation.latitude.toFixed(6)}, ${pickedLocation.longitude.toFixed(6)}`
+                    : "No coordinates selected yet"}
+                </div>
               </div>
             </div>
 
