@@ -15,8 +15,8 @@ type Props = {
   status: string;
   category?: string;
   locationLabel: string;
-  latitude?: number;
-  longitude?: number;
+  latitude?: number | string;
+  longitude?: number | string;
   cardTitle?: string;
 };
 
@@ -30,10 +30,13 @@ export default function IssueLocationMapSection({
   longitude,
   cardTitle = "Location",
 }: Props) {
+  const INLINE_ZOOM = 19;
+  const CLEAR_MAP_ZOOM = 19;
   const [isOpen, setIsOpen] = React.useState(false);
 
-  const hasCoordinates =
-    typeof latitude === "number" && Number.isFinite(latitude) && typeof longitude === "number" && Number.isFinite(longitude);
+  const normalizedLatitude = Number(latitude);
+  const normalizedLongitude = Number(longitude);
+  const hasCoordinates = Number.isFinite(normalizedLatitude) && Number.isFinite(normalizedLongitude);
 
   React.useEffect(() => {
     if (!isOpen) return;
@@ -61,24 +64,26 @@ export default function IssueLocationMapSection({
 
         {hasCoordinates ? (
           <div className="mt-4 space-y-3">
-            <IssueMapClient
-              issues={[
-                {
-                  id: issueId,
-                  title,
-                  status,
-                  category,
-                  latitude,
-                  longitude,
-                  locationLabel,
-                },
-              ]}
-              selectedIssueId={issueId}
-              center={[latitude, longitude]}
-              zoom={15}
-              className="h-60"
-            />
-            <div className="text-xs text-gray-500">{latitude.toFixed(6)}, {longitude.toFixed(6)}</div>
+            <div style={{ height: 240 }}>
+              <IssueMapClient
+                issues={[
+                  {
+                    id: issueId,
+                    title,
+                    status,
+                    category,
+                    latitude: normalizedLatitude,
+                    longitude: normalizedLongitude,
+                    locationLabel,
+                  },
+                ]}
+                selectedIssueId={issueId}
+                center={[normalizedLatitude, normalizedLongitude]}
+                zoom={INLINE_ZOOM}
+                className="h-full"
+              />
+            </div>
+            <div className="text-xs text-gray-500">{normalizedLatitude.toFixed(6)}, {normalizedLongitude.toFixed(6)}</div>
           </div>
         ) : (
           <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
@@ -118,14 +123,14 @@ export default function IssueLocationMapSection({
                       title,
                       status,
                       category,
-                      latitude,
-                      longitude,
+                      latitude: normalizedLatitude,
+                      longitude: normalizedLongitude,
                       locationLabel,
                     },
                   ]}
                   selectedIssueId={issueId}
-                  center={[latitude, longitude]}
-                  zoom={16}
+                  center={[normalizedLatitude, normalizedLongitude]}
+                  zoom={CLEAR_MAP_ZOOM}
                   className="h-full"
                 />
               ) : (

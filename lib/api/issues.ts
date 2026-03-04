@@ -24,6 +24,18 @@ export type IssueListItem = {
   createdAt: string;
   reporterId?: string;
   reporterName?: string;
+  statusUpdatedByRole?: "admin" | "authority";
+  statusUpdatedByUserId?: string;
+  statusUpdatedAt?: string;
+};
+
+export type UpdateIssueStatusResult = {
+  id: string;
+  status: string;
+  updatedAt: string;
+  statusUpdatedByRole?: "admin" | "authority";
+  statusUpdatedByUserId?: string;
+  statusUpdatedAt?: string;
 };
 
 export type ReverseGeocodeResult = {
@@ -119,7 +131,7 @@ export async function listPriorityIssues() {
 export async function updateIssueStatus(id: string, status: string) {
   try {
     const resp = await apiClient.patch(API_ENDPOINTS.issues.updateStatus(id), { status });
-    return resp.data as { success?: boolean; message?: string; data?: unknown };
+    return resp.data as { success?: boolean; message?: string; data?: UpdateIssueStatusResult };
   } catch (error: unknown) {
     throw new Error(unwrapError(error, "Failed to update status"));
   }

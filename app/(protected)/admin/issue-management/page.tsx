@@ -2,7 +2,8 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { Eye, X } from "lucide-react";
+import Link from "next/link";
+import { Eye, FileText, X } from "lucide-react";
 import { listAuthorityIssues, type IssueListItem } from "@/lib/api/issues";
 
 const IssueMapClient = dynamic(() => import("@/features/shared/map/IssueMapClient"), {
@@ -177,7 +178,7 @@ export default function AdminIssueManagementPage() {
                     <td className="px-4 py-3 text-gray-700">{issue.reporterName || "Citizen"}</td>
                     <td className="px-4 py-3 text-gray-700">{formatDate(issue.createdAt)}</td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center justify-end">
+                      <div className="flex items-center justify-end gap-3">
                         <button
                           type="button"
                           aria-label="View issue map"
@@ -186,6 +187,13 @@ export default function AdminIssueManagementPage() {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
+                        <Link
+                          href={`/admin/issue-management/${issue.id}`}
+                          aria-label="View full issue details"
+                          className="text-gray-600 hover:text-gray-900"
+                        >
+                          <FileText className="w-4 h-4" />
+                        </Link>
                       </div>
                     </td>
                   </tr>

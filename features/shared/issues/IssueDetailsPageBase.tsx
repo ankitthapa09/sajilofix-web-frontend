@@ -54,6 +54,24 @@ function formatDate(value: string) {
   });
 }
 
+function formatDateTime(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function labelActor(role?: "admin" | "authority") {
+  if (role === "admin") return "Admin";
+  if (role === "authority") return "Authority";
+  return "-";
+}
+
 function formatLocation(issue: IssueListItem) {
   const parts = [
     issue.location?.address,
@@ -141,8 +159,15 @@ export default function IssueDetailsPageBase({
     if (!issue || !canUpdateStatus) return;
     setIsUpdating(true);
     try {
-      await updateIssueStatus(issue.id, status);
-      setIssue({ ...issue, status });
+      const result = await updateIssueStatus(issue.id, status);
+      const payload = result.data;
+      setIssue({
+        ...issue,
+        status,
+        statusUpdatedByRole: payload?.statusUpdatedByRole ?? issue.statusUpdatedByRole,
+        statusUpdatedByUserId: payload?.statusUpdatedByUserId ?? issue.statusUpdatedByUserId,
+        statusUpdatedAt: payload?.statusUpdatedAt ?? issue.statusUpdatedAt,
+      });
       toast.success("Status updated");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to update status";
@@ -316,6 +341,16 @@ export default function IssueDetailsPageBase({
                 </div>
               </div>
             ) : null}
+
+            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="text-sm font-semibold text-gray-700">Status Update Source</div>
+              <div className="mt-3 text-sm text-gray-600">
+                <div className="font-semibold text-gray-900">{labelActor(issue.statusUpdatedByRole)}</div>
+                <div className="text-xs text-gray-400">
+                  {issue.statusUpdatedAt ? `Last changed on ${formatDateTime(issue.statusUpdatedAt)}` : "No status changes yet"}
+                </div>
+              </div>
+            </div>
 
             <IssueLocationMapSection
               issueId={issue.id}

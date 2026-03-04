@@ -2,14 +2,14 @@
 
 import React from "react";
 import {
-  CircleMarker,
   MapContainer,
+  Marker,
   Popup,
   TileLayer,
   useMap,
   useMapEvents,
 } from "react-leaflet";
-import type { LatLngExpression } from "leaflet";
+import { divIcon, type LatLngExpression } from "leaflet";
 
 export type MapIssuePoint = {
   id: string;
@@ -46,6 +46,37 @@ function markerColor(status?: string) {
   return STATUS_COLORS[status] ?? "#64748b";
 }
 
+function issuePinIcon(color: string, selected: boolean) {
+  const scale = selected ? 1.15 : 1;
+  return divIcon({
+    className: "issue-map-pin-wrapper",
+    html: `<div style="
+      width:22px;
+      height:22px;
+      border-radius:9999px 9999px 9999px 0;
+      background:${color};
+      border:2px solid #ffffff;
+      box-shadow:0 6px 14px rgba(0,0,0,0.25);
+      transform:rotate(-45deg) scale(${scale});
+      transform-origin:center;
+      position:relative;
+    ">
+      <span style="
+        position:absolute;
+        width:8px;
+        height:8px;
+        border-radius:9999px;
+        background:#ffffff;
+        top:5px;
+        left:5px;
+      "></span>
+    </div>`,
+    iconSize: [28, 34],
+    iconAnchor: [14, 34],
+    popupAnchor: [0, -28],
+  });
+}
+
 function MapClickHandler({
   enabled,
   onPickLocation,
@@ -66,35 +97,37 @@ function FitBoundsToData({
   issues,
   selectedIssueId,
   pickedLocation,
+  focusZoom,
 }: {
   issues: MapIssuePoint[];
   selectedIssueId?: string;
   pickedLocation?: { latitude: number; longitude: number } | null;
+  focusZoom: number;
 }) {
   const map = useMap();
 
   React.useEffect(() => {
     if (pickedLocation) {
-      map.setView([pickedLocation.latitude, pickedLocation.longitude], 16, { animate: true });
+      map.setView([pickedLocation.latitude, pickedLocation.longitude], focusZoom, { animate: true });
       return;
     }
 
     const selected = selectedIssueId ? issues.find((issue) => issue.id === selectedIssueId) : undefined;
     if (selected) {
-      map.setView([selected.latitude, selected.longitude], 15, { animate: true });
+      map.setView([selected.latitude, selected.longitude], focusZoom, { animate: true });
       return;
     }
 
     if (!issues.length) return;
 
     if (issues.length === 1) {
-      map.setView([issues[0].latitude, issues[0].longitude], 14, { animate: false });
+      map.setView([issues[0].latitude, issues[0].longitude], focusZoom, { animate: false });
       return;
     }
 
     const bounds = issues.map((issue) => [issue.latitude, issue.longitude] as [number, number]);
     map.fitBounds(bounds, { padding: [36, 36] });
-  }, [issues, map, pickedLocation, selectedIssueId]);
+  }, [focusZoom, issues, map, pickedLocation, selectedIssueId]);
 
   return null;
 }
@@ -117,6 +150,7 @@ export default function IssueMapClient({
 
   return (
     <div
+      style={{ minHeight: 220 }}
       className={
         "relative w-full overflow-hidden rounded-2xl border border-gray-200 " +
         (className ?? "h-105")
@@ -129,23 +163,22 @@ export default function IssueMapClient({
         />
 
         <MapClickHandler enabled={pickMode} onPickLocation={onPickLocation} />
-        <FitBoundsToData issues={issues} selectedIssueId={selectedIssueId} pickedLocation={pickedLocation} />
+        <FitBoundsToData
+          issues={issues}
+          selectedIssueId={selectedIssueId}
+          pickedLocation={pickedLocation}
+          focusZoom={zoom}
+        />
 
         {issues.map((issue) => {
           const isSelected = selectedIssueId === issue.id;
           const color = markerColor(issue.status);
 
           return (
-            <CircleMarker
+            <Marker
               key={issue.id}
-              center={[issue.latitude, issue.longitude]}
-              radius={isSelected ? 11 : 8}
-              pathOptions={{
-                color: "#ffffff",
-                weight: 2,
-                fillColor: color,
-                fillOpacity: 0.95,
-              }}
+              position={[issue.latitude, issue.longitude]}
+              icon={issuePinIcon(color, isSelected)}
               eventHandlers={{
                 click: () => {
                   onSelectIssue?.(issue.id);
@@ -159,15 +192,14 @@ export default function IssueMapClient({
                   {issue.locationLabel ? <div className="text-xs text-gray-500">{issue.locationLabel}</div> : null}
                 </div>
               </Popup>
-            </CircleMarker>
+            </Marker>
           );
         })}
 
         {pickMode && pickedLocation ? (
-          <CircleMarker
-            center={[pickedLocation.latitude, pickedLocation.longitude]}
-            radius={10}
-            pathOptions={{ color: "#ffffff", weight: 2, fillColor: "#2563eb", fillOpacity: 0.95 }}
+          <Marker
+            position={[pickedLocation.latitude, pickedLocation.longitude]}
+            icon={issuePinIcon("#2563eb", true)}
           />
         ) : null}
       </MapContainer>

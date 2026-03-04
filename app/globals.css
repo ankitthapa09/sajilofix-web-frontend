@@ -56,3 +56,56 @@ body {
 .leaflet-container .leaflet-marker-shadow {
   max-width: none !important;
 }
+
+.issue-map-pin-wrapper {
+  background: transparent;
+  border: 0;
+}
+
+.leaflet-div-icon.issue-map-pin-wrapper {
+  background: transparent;
+  border: 0;
+}
+
+.issue-map-pin {
+  position: relative;
+  display: block;
+  width: 22px;
+  height: 22px;
+  background: var(--pin-color, #2563eb);
+  border-radius: 9999px 9999px 9999px 0;
+  transform: rotate(-45deg);
+  border: 2px solid #ffffff;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
+  animation: issue-map-pin-pop 700ms ease-out;
+}
+
+.issue-map-pin::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: #ffffff;
+  top: 5px;
+  left: 5px;
+}
+
+.issue-map-pin--selected {
+  transform: rotate(-45deg) scale(1.12);
+}
+
+@keyframes issue-map-pin-pop {
+  0% {
+    transform: rotate(-45deg) scale(0.6);
+    opacity: 0;
+  }
+  70% {
+    transform: rotate(-45deg) scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(-45deg) scale(1);
+    opacity: 1;
+  }
+}
