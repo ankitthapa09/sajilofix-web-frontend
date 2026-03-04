@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import { usePathname } from "next/navigation";
 import { Bell, Menu } from "lucide-react";
 
 type Props = {
@@ -32,56 +31,11 @@ function initialsFromName(name?: string) {
   return (a + b).toUpperCase();
 }
 
-function headerForPath(pathname: string) {
-  if (pathname.startsWith("/admin/user-management")) {
-    return {
-      title: "User Management",
-      subtitle: "Manage your platform effectively",
-    };
-  }
-
-  if (pathname.startsWith("/admin/issue-management")) {
-    return {
-      title: "Issue Management",
-      subtitle: "Manage your platform effectively",
-    };
-  }
-
-  if (pathname.startsWith("/admin/departments")) {
-    return {
-      title: "Departments",
-      subtitle: "Manage your platform effectively",
-    };
-  }
-
-  if (pathname.startsWith("/admin/categories")) {
-    return {
-      title: "Categories",
-      subtitle: "Manage your platform effectively",
-    };
-  }
-
-  if (pathname.startsWith("/admin/settings")) {
-    return {
-      title: "Settings",
-      subtitle: "Manage your platform effectively",
-    };
-  }
-
-  return {
-    title: "Dashboard",
-    subtitle: "Manage your platform effectively",
-  };
-}
-
-export default function AdminTopbar({ user, onMenuClick }: Props) {
-  const pathname = usePathname() || "/admin";
-  const header = headerForPath(pathname);
-
+export default function AuthorityTopbar({ user, onMenuClick }: Props) {
   return (
     <header className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-start gap-3 min-w-0">
           {onMenuClick ? (
             <button
               type="button"
@@ -94,12 +48,18 @@ export default function AdminTopbar({ user, onMenuClick }: Props) {
           ) : null}
 
           <div className="min-w-0">
-            <h1 className="text-lg font-semibold text-gray-900 truncate">{header.title}</h1>
-            <p className="text-sm text-gray-500 truncate">{header.subtitle}</p>
+            <h1 className="text-lg font-semibold text-gray-900 truncate">Dashboard Overview</h1>
+            <p className="text-sm text-gray-500 truncate">
+              Monitor and manage civic issues across your jurisdiction
+            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3 sm:gap-4">
+          <div className="hidden sm:inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+            3 Pending Review
+          </div>
+
           <button
             className="bg-white border border-gray-200 px-3 py-2 rounded-lg relative transition-all hover:-translate-y-px hover:shadow-sm"
             aria-label="Notifications"
@@ -116,17 +76,17 @@ export default function AdminTopbar({ user, onMenuClick }: Props) {
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={resolveProfilePhotoUrl(user.profilePhoto)}
-                alt={user.fullName || "Admin"}
+                alt={user.fullName || "Authority"}
                 className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-gray-200 bg-white"
                 loading="lazy"
               />
             ) : (
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-linear-to-br from-indigo-600 to-violet-600 text-white flex items-center justify-center font-semibold shadow-sm">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-linear-to-br from-blue-600 to-blue-500 text-white flex items-center justify-center font-semibold shadow-sm">
                 {initialsFromName(user.fullName)}
               </div>
             )}
             <div className="leading-tight hidden sm:block">
-              <div className="font-semibold text-gray-900">{user.fullName || "Admin User"}</div>
+              <div className="font-semibold text-gray-900">{user.fullName || "Authority User"}</div>
               <div className="text-sm text-gray-500">{user.email || ""}</div>
             </div>
           </div>

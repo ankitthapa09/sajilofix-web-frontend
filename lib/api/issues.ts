@@ -22,6 +22,30 @@ export type IssueListItem = {
   location: IssueLocation;
   photos: string[];
   createdAt: string;
+  reporterId?: string;
+  reporterName?: string;
+  statusUpdatedByRole?: "admin" | "authority";
+  statusUpdatedByUserId?: string;
+  statusUpdatedAt?: string;
+};
+
+export type UpdateIssueStatusResult = {
+  id: string;
+  status: string;
+  updatedAt: string;
+  statusUpdatedByRole?: "admin" | "authority";
+  statusUpdatedByUserId?: string;
+  statusUpdatedAt?: string;
+};
+
+export type ReverseGeocodeResult = {
+  address: string;
+  district?: string;
+  municipality?: string;
+  ward?: string;
+  landmark?: string;
+  latitude: number;
+  longitude: number;
 };
 
 function unwrapError(error: unknown, fallback: string) {
@@ -86,11 +110,49 @@ export async function listIssueReports() {
   }
 }
 
+export async function listAuthorityIssues() {
+  try {
+    const resp = await apiClient.get(API_ENDPOINTS.issues.list);
+    return (resp.data?.data ?? []) as IssueListItem[];
+  } catch (error: unknown) {
+    throw new Error(unwrapError(error, "Failed to load issues"));
+  }
+}
+
+export async function listPriorityIssues() {
+  try {
+    const resp = await apiClient.get(API_ENDPOINTS.issues.priority);
+    return (resp.data?.data ?? []) as IssueListItem[];
+  } catch (error: unknown) {
+    throw new Error(unwrapError(error, "Failed to load priority issues"));
+  }
+}
+
+export async function updateIssueStatus(id: string, status: string) {
+  try {
+    const resp = await apiClient.patch(API_ENDPOINTS.issues.updateStatus(id), { status });
+    return resp.data as { success?: boolean; message?: string; data?: UpdateIssueStatusResult };
+  } catch (error: unknown) {
+    throw new Error(unwrapError(error, "Failed to update status"));
+  }
+}
+
 export async function getIssueReport(id: string) {
   try {
     const resp = await apiClient.get(API_ENDPOINTS.issues.get(id));
     return resp.data?.data as IssueListItem;
   } catch (error: unknown) {
     throw new Error(unwrapError(error, "Failed to load report"));
+  }
+}
+
+export async function reverseGeocodeLocation(latitude: number, longitude: number) {
+  try {
+    const resp = await apiClient.get(API_ENDPOINTS.issues.reverseGeocode, {
+      params: { lat: latitude, lng: longitude },
+    });
+    return resp.data?.data as ReverseGeocodeResult;
+  } catch (error: unknown) {
+    throw new Error(unwrapError(error, "Failed to auto-fill location"));
   }
 }

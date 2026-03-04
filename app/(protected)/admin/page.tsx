@@ -377,7 +377,7 @@ export default function AdminDashboard() {
       department: row.department === "—" ? "" : (row.department ?? ""),
     });
 
-    // Open first with skeleton; then hydrate from API
+    
     reset({
       formMode: "edit",
       fullName: row.fullName,
@@ -618,7 +618,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Top stat cards (like screenshot) */}
+      
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <TopStatCard
           title="Total Users"
@@ -692,7 +692,7 @@ export default function AdminDashboard() {
         />
       </div>
 
-      {/* Recent panels */}
+      
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <section id="issues" className="bg-white border border-gray-200 rounded-2xl shadow-sm">
           <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
@@ -1349,7 +1349,7 @@ function SummaryCard({
         <div>
           <div className="text-sm font-medium text-gray-500">{title}</div>
           <div className="mt-2 text-3xl font-semibold text-gray-900 tracking-tight">{value}</div>
-          <div className="mt-2 h-1.5 w-24 rounded-full bg-gradient-to-r from-gray-200 via-gray-100 to-transparent" />
+          <div className="mt-2 h-1.5 w-24 rounded-full bg-linear-to-r from-gray-200 via-gray-100 to-transparent" />
         </div>
         <div className="transition-transform group-hover:scale-[1.03]">{icon}</div>
       </div>
@@ -1382,7 +1382,7 @@ function TopStatCard({
   return (
     <div
       className={
-        `${toneStyles} text-white rounded-2xl shadow-md border border-black/5 p-5 min-h-[110px] ` +
+        `${toneStyles} text-white rounded-2xl shadow-md border border-black/5 p-5 min-h-27.5 ` +
         "transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
       }
     >
@@ -1391,7 +1391,7 @@ function TopStatCard({
           <div className="text-sm font-semibold text-white/90">{title}</div>
           <div className="mt-2 text-3xl font-extrabold tracking-tight">{value}</div>
           <div className="mt-2 text-sm text-white/90">{subtitle}</div>
-        </div>
+        </div> 
         <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
           {icon}
         </div>

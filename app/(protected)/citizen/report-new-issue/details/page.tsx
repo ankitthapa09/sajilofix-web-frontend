@@ -117,7 +117,7 @@ export default function ReportNewIssueDetailsStep() {
                 value={draft.details.description}
                 onChange={(event) => updateDetails({ description: event.target.value })}
                 placeholder="Describe the issue in detail. When did it occur? How severe is it? Any safety concerns?"
-                className="mt-1 min-h-[120px] w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
+                className="mt-1 min-h-30 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700"
               />
               <div className="mt-2 text-xs text-gray-500">{count} characters</div>
             </div>
