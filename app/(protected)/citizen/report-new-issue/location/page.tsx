@@ -13,11 +13,44 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { useReportIssue } from "@/features/citizen/components/ReportIssueProvider";
+import { reverseGeocodeLocation } from "@/lib/api/issues";
 
 const IssueMapClient = dynamic(() => import("@/features/shared/map/IssueMapClient"), {
   ssr: false,
   loading: () => <div className="mt-6 h-80 animate-pulse rounded-2xl border border-gray-200 bg-gray-100" />,
 });
+
+const NEPAL_BOUNDS = {
+  minLat: 26.3,
+  maxLat: 30.5,
+  minLng: 80.0,
+  maxLng: 88.3,
+};
+
+function isWithinNepal(latitude: number, longitude: number) {
+  return (
+    latitude >= NEPAL_BOUNDS.minLat &&
+    latitude <= NEPAL_BOUNDS.maxLat &&
+    longitude >= NEPAL_BOUNDS.minLng &&
+    longitude <= NEPAL_BOUNDS.maxLng
+  );
+}
+
+function parseWardFromText(value?: string) {
+  if (!value) return undefined;
+
+  const patterns = [
+    /\b(?:ward|wd|wada|woda|वडा)\s*(?:no\.?|number|नं\.?)?\s*[-:]?\s*(\d{1,3})\b/i,
+    /(?:^|[\s,])[A-Za-z\u0900-\u097F.'’]+\s*[-–]\s*(\d{1,3})\b/u,
+  ];
+
+  for (const pattern of patterns) {
+    const match = value.match(pattern);
+    if (match?.[1]) return match[1];
+  }
+
+  return undefined;
+}
 
 type Step = {
   id: number;
@@ -36,13 +69,57 @@ const steps: Step[] = [
 
 export default function ReportNewIssueLocationStep() {
   const { draft, updateLocation } = useReportIssue();
+  const [isAutoFilling, setIsAutoFilling] = React.useState(false);
+  const [autoFillError, setAutoFillError] = React.useState<string | null>(null);
 
   const lat = Number(draft.location.latitude);
   const lng = Number(draft.location.longitude);
   const pickedLocation =
-    Number.isFinite(lat) && Number.isFinite(lng)
+    Number.isFinite(lat) && Number.isFinite(lng) && isWithinNepal(lat, lng)
       ? { latitude: lat, longitude: lng }
       : null;
+
+  React.useEffect(() => {
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    if (isWithinNepal(lat, lng)) return;
+
+    updateLocation({
+      latitude: "",
+      longitude: "",
+    });
+    setAutoFillError("Selected point is outside Nepal. Please pick a location inside Nepal.");
+  }, [lat, lng, updateLocation]);
+
+  const autoFillLocation = React.useCallback(
+    async (latitude: number, longitude: number) => {
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+      if (!isWithinNepal(latitude, longitude)) {
+        setAutoFillError("Selected point is outside Nepal. Please pick a location inside Nepal.");
+        return;
+      }
+
+      setIsAutoFilling(true);
+      setAutoFillError(null);
+
+      try {
+        const result = await reverseGeocodeLocation(latitude, longitude);
+        updateLocation({
+          latitude: result.latitude.toFixed(6),
+          longitude: result.longitude.toFixed(6),
+          address: result.address ?? draft.location.address,
+          district: result.district ?? draft.location.district,
+          municipality: result.municipality ?? draft.location.municipality,
+          ward: result.ward ?? parseWardFromText(result.address) ?? draft.location.ward,
+          landmark: result.landmark ?? draft.location.landmark,
+        });
+      } catch (err: unknown) {
+        setAutoFillError(err instanceof Error ? err.message : "Failed to auto-fill location");
+      } finally {
+        setIsAutoFilling(false);
+      }
+    },
+    [draft.location.address, draft.location.district, draft.location.landmark, draft.location.municipality, draft.location.ward, updateLocation],
+  );
 
   return (
     <div className="space-y-6">
@@ -115,13 +192,24 @@ export default function ReportNewIssueLocationStep() {
             <div className="mt-6 rounded-2xl border border-gray-200 bg-slate-100/70 p-3">
               <IssueMapClient
                 pickMode
+                center={[27.7172, 85.324]}
+                zoom={12}
                 pickedLocation={pickedLocation}
-                onPickLocation={(latitude, longitude) =>
+                onPickLocation={(latitude, longitude) => {
+                  const fixedLat = Number(latitude.toFixed(6));
+                  const fixedLng = Number(longitude.toFixed(6));
+
+                  if (!isWithinNepal(fixedLat, fixedLng)) {
+                    setAutoFillError("Selected point is outside Nepal. Please pick a location inside Nepal.");
+                    return;
+                  }
+
                   updateLocation({
-                    latitude: latitude.toFixed(6),
-                    longitude: longitude.toFixed(6),
-                  })
-                }
+                    latitude: fixedLat.toFixed(6),
+                    longitude: fixedLng.toFixed(6),
+                  });
+                  void autoFillLocation(fixedLat, fixedLng);
+                }}
                 className="h-80 w-full overflow-hidden rounded-xl border border-gray-200"
               />
               <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-600">
@@ -133,6 +221,16 @@ export default function ReportNewIssueLocationStep() {
                     ? `Selected: ${pickedLocation.latitude.toFixed(6)}, ${pickedLocation.longitude.toFixed(6)}`
                     : "No coordinates selected yet"}
                 </div>
+                {isAutoFilling ? (
+                  <div className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-700">
+                    Auto-filling address...
+                  </div>
+                ) : null}
+                {autoFillError ? (
+                  <div className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 font-semibold text-rose-700">
+                    {autoFillError}
+                  </div>
+                ) : null}
               </div>
             </div>
 
@@ -142,6 +240,13 @@ export default function ReportNewIssueLocationStep() {
                 <input
                   value={draft.location.latitude}
                   onChange={(event) => updateLocation({ latitude: event.target.value })}
+                  onBlur={(event) => {
+                    const value = Number(event.target.value);
+                    const lngValue = Number(draft.location.longitude);
+                    if (Number.isFinite(value) && Number.isFinite(lngValue)) {
+                      void autoFillLocation(value, lngValue);
+                    }
+                  }}
                   className="mt-1 h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700"
                 />
               </div>
@@ -150,6 +255,13 @@ export default function ReportNewIssueLocationStep() {
                 <input
                   value={draft.location.longitude}
                   onChange={(event) => updateLocation({ longitude: event.target.value })}
+                  onBlur={(event) => {
+                    const value = Number(event.target.value);
+                    const latValue = Number(draft.location.latitude);
+                    if (Number.isFinite(value) && Number.isFinite(latValue)) {
+                      void autoFillLocation(latValue, value);
+                    }
+                  }}
                   className="mt-1 h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-700"
                 />
               </div>

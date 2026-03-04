@@ -159,7 +159,7 @@ export default function ReportsPage() {
             </div>
           ) : filtered.length ? (
             <div className="overflow-x-auto">
-              <table className="min-w-[880px] w-full text-left text-sm">
+              <table className="min-w-220 w-full text-left text-sm">
                 <thead className="text-xs uppercase text-gray-400">
                   <tr className="border-b border-gray-100">
                     <th className="px-3 py-3">Report ID</th>

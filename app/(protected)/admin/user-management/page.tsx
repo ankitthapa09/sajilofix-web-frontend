@@ -608,7 +608,7 @@ export default function AdminUserManagementPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3 lg:w-[360px]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3 lg:w-90">
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value as Role | "all")}
@@ -635,7 +635,7 @@ export default function AdminUserManagementPage() {
 
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-[980px] w-full text-sm">
+          <table className="min-w-245 w-full text-sm">
             <thead className="bg-white text-gray-600 border-b border-gray-200">
               <tr className="text-left">
                 <th className="px-4 py-3 font-semibold">User</th>

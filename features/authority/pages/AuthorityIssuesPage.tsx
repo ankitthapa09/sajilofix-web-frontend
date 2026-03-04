@@ -201,7 +201,7 @@ export default function AuthorityIssuesPage() {
             </div>
           ) : filtered.length ? (
             <div className="overflow-x-auto">
-              <table className="min-w-[1100px] w-full text-left text-sm">
+              <table className="min-w-275 w-full text-left text-sm">
                 <thead className="text-xs uppercase text-gray-400">
                   <tr className="border-b border-gray-100">
                     <th className="px-3 py-3">ID</th>

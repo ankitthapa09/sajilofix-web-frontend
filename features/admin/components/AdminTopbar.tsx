@@ -101,7 +101,7 @@ export default function AdminTopbar({ user, onMenuClick }: Props) {
 
         <div className="flex items-center gap-3 sm:gap-4">
           <button
-            className="bg-white border border-gray-200 px-3 py-2 rounded-lg relative transition-all hover:-translate-y-[1px] hover:shadow-sm"
+            className="bg-white border border-gray-200 px-3 py-2 rounded-lg relative transition-all hover:-translate-y-px hover:shadow-sm"
             aria-label="Notifications"
             type="button"
           >
@@ -121,7 +121,7 @@ export default function AdminTopbar({ user, onMenuClick }: Props) {
                 loading="lazy"
               />
             ) : (
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white flex items-center justify-center font-semibold shadow-sm">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-linear-to-br from-indigo-600 to-violet-600 text-white flex items-center justify-center font-semibold shadow-sm">
                 {initialsFromName(user.fullName)}
               </div>
             )}

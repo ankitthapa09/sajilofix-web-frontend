@@ -61,7 +61,7 @@ export default function AuthorityTopbar({ user, onMenuClick }: Props) {
           </div>
 
           <button
-            className="bg-white border border-gray-200 px-3 py-2 rounded-lg relative transition-all hover:-translate-y-[1px] hover:shadow-sm"
+            className="bg-white border border-gray-200 px-3 py-2 rounded-lg relative transition-all hover:-translate-y-px hover:shadow-sm"
             aria-label="Notifications"
             type="button"
           >
@@ -81,7 +81,7 @@ export default function AuthorityTopbar({ user, onMenuClick }: Props) {
                 loading="lazy"
               />
             ) : (
-              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-500 text-white flex items-center justify-center font-semibold shadow-sm">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-linear-to-br from-blue-600 to-blue-500 text-white flex items-center justify-center font-semibold shadow-sm">
                 {initialsFromName(user.fullName)}
               </div>
             )}

@@ -26,6 +26,16 @@ export type IssueListItem = {
   reporterName?: string;
 };
 
+export type ReverseGeocodeResult = {
+  address: string;
+  district?: string;
+  municipality?: string;
+  ward?: string;
+  landmark?: string;
+  latitude: number;
+  longitude: number;
+};
+
 function unwrapError(error: unknown, fallback: string) {
   const err = error as { response?: { data?: { message?: string } }; message?: string };
   return err.response?.data?.message || err.message || fallback;
@@ -121,5 +131,16 @@ export async function getIssueReport(id: string) {
     return resp.data?.data as IssueListItem;
   } catch (error: unknown) {
     throw new Error(unwrapError(error, "Failed to load report"));
+  }
+}
+
+export async function reverseGeocodeLocation(latitude: number, longitude: number) {
+  try {
+    const resp = await apiClient.get(API_ENDPOINTS.issues.reverseGeocode, {
+      params: { lat: latitude, lng: longitude },
+    });
+    return resp.data?.data as ReverseGeocodeResult;
+  } catch (error: unknown) {
+    throw new Error(unwrapError(error, "Failed to auto-fill location"));
   }
 }

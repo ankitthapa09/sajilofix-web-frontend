@@ -27,8 +27,8 @@ export default function AuthorityShell({ user, children }: Props) {
   }, [mobileOpen]);
 
   return (
-    <div className="min-h-[100dvh] bg-gray-50">
-      <div className="flex min-h-[100dvh]">
+    <div className="min-h-dvh bg-gray-50">
+      <div className="flex min-h-dvh">
         <div className="hidden lg:block">
           <AuthoritySidebar />
         </div>
@@ -42,7 +42,7 @@ export default function AuthorityShell({ user, children }: Props) {
               className="absolute inset-0 bg-black/40"
             />
 
-            <div className="absolute inset-y-0 left-0 w-[18.5rem] max-w-[85vw] bg-white shadow-2xl">
+            <div className="absolute inset-y-0 left-0 w-74 max-w-[85vw] bg-white shadow-2xl">
               <div className="absolute right-3 top-3 z-10">
                 <button
                   type="button"
