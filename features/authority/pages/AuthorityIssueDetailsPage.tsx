@@ -7,6 +7,7 @@ import { useParams } from "next/navigation";
 import { ArrowLeft, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import { getIssueReport, updateIssueStatus, type IssueListItem } from "@/lib/api/issues";
 import { toast } from "sonner";
+import IssueLocationMapSection from "@/features/shared/map/IssueLocationMapSection";
 
 const CATEGORY_LABELS: Record<string, string> = {
   roads_potholes: "Roads & Potholes",
@@ -62,8 +63,6 @@ function formatLocation(issue: IssueListItem) {
   ].filter(Boolean);
   return parts.length ? parts.join(", ") : "-";
 }
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
 
 function resolvePhotoUrl(path: string) {
   if (!path) return "";
@@ -306,26 +305,16 @@ export default function AuthorityIssueDetailsPage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-              <div className="text-sm font-semibold text-gray-700">Location</div>
-              <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
-                <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-                  <MapPin className="h-5 w-5" />
-                </div>
-                <div className="text-sm font-semibold text-gray-700">Interactive Map</div>
-                <div className="text-xs text-gray-400">
-                  {issue.location?.latitude && issue.location?.longitude
-                    ? `${issue.location.latitude}, ${issue.location.longitude}`
-                    : "Coordinates unavailable"}
-                </div>
-              </div>
-              <button
-                type="button"
-                className="mt-3 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-600 hover:border-gray-300"
-              >
-                View in Maps
-              </button>
-            </div>
+            <IssueLocationMapSection
+              issueId={issue.id}
+              title={issue.title}
+              status={issue.status}
+              category={formatCategory(issue.category)}
+              locationLabel={formatLocation(issue)}
+              latitude={issue.location?.latitude}
+              longitude={issue.location?.longitude}
+              cardTitle="Location"
+            />
           </div>
         </div>
       ) : null}
