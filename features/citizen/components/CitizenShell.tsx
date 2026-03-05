@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 
 import CitizenSidebar from "@/features/citizen/components/CitizenSidebar";
-import NotificationBell from "@/features/shared/notifications/NotificationBell";
 
 type Props = {
   children: React.ReactNode;
@@ -105,10 +104,7 @@ export default function CitizenShell({ children }: Props) {
               </div>
 
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-                <NotificationBell
-                  buttonClassName="bg-white border border-gray-200 px-3 py-2 rounded-md relative transition-all hover:-translate-y-px hover:shadow-sm"
-                  panelClassName="absolute right-0 z-40 mt-2 w-[min(26rem,calc(100vw-2rem))] rounded-xl border border-gray-200 bg-white shadow-lg"
-                />
+                <button className="bg-white border border-gray-200 px-3 py-2 rounded-md">🔔</button>
                 {headerConfig.showCta ? (
                   <Link
                     href="/citizen/report-new-issue/category"
