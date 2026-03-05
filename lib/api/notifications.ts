@@ -76,3 +76,12 @@ export async function markAllNotificationsRead(): Promise<number> {
     throw new Error(unwrapError(error, "Failed to mark all notifications as read"));
   }
 }
+
+export async function removeNotification(id: string): Promise<{ id: string }> {
+  try {
+    const resp = await apiClient.delete(API_ENDPOINTS.notifications.remove(id));
+    return { id: String(resp.data?.data?.id ?? id) };
+  } catch (error: unknown) {
+    throw new Error(unwrapError(error, "Failed to remove notification"));
+  }
+}

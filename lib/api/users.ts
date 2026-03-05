@@ -80,3 +80,20 @@ export async function usersUpdateMe(input: UsersUpdateMeInput): Promise<GetMeRes
     throw new Error(unwrapError(error, "Failed to update profile"));
   }
 }
+
+export type UsersChangePasswordInput = {
+  currentPassword: string;
+  newPassword: string;
+};
+
+export async function usersChangeMyPassword(input: UsersChangePasswordInput): Promise<{ success: boolean; message: string }> {
+  try {
+    const resp = await apiClient.patch(API_ENDPOINTS.users.mePassword, input);
+    return {
+      success: Boolean(resp.data?.success ?? true),
+      message: String(resp.data?.message ?? "Password updated successfully"),
+    };
+  } catch (error: unknown) {
+    throw new Error(unwrapError(error, "Failed to update password"));
+  }
+}

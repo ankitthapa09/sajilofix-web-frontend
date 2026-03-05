@@ -14,6 +14,7 @@ export const API_ENDPOINTS = {
     me: "/api/users/me",
     meUpdate: "/api/users/me",
     mePhoto: "/api/users/me/photo",
+    mePassword: "/api/users/me/password",
   },
   issues: {
     list: "/api/issues",
@@ -29,6 +30,7 @@ export const API_ENDPOINTS = {
     list: "/api/notifications",
     unreadCount: "/api/notifications/unread-count",
     markRead: (id: string) => `/api/notifications/${id}/read`,
+    remove: (id: string) => `/api/notifications/${id}`,
     markAllRead: "/api/notifications/read-all",
   },
 } as const;

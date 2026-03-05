@@ -1,13 +1,14 @@
 "use client";
 
 import React from "react";
-import { Bell } from "lucide-react";
+import { Bell, CheckCheck, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   getUnreadNotificationCount,
   listNotifications,
   markAllNotificationsRead,
   markNotificationRead,
+  removeNotification,
   type NotificationItem,
 } from "@/lib/api/notifications";
 
@@ -21,7 +22,12 @@ function formatNotificationTime(value?: string) {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleString();
+  return date.toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function formatTypeLabel(type: NotificationItem["type"]) {
@@ -52,7 +58,7 @@ export default function NotificationBell({
   const [unreadCount, setUnreadCount] = React.useState(0);
   const [items, setItems] = React.useState<NotificationItem[]>([]);
   const wrapperRef = React.useRef<HTMLDivElement | null>(null);
-  const fetchLimit = Math.max(10, limit);
+  const fetchLimit = Math.min(Math.max(1, limit), 10);
 
   const loadUnread = React.useCallback(async () => {
     try {
@@ -131,6 +137,19 @@ export default function NotificationBell({
     }
   };
 
+  const handleRemove = async (item: NotificationItem) => {
+    try {
+      await removeNotification(item._id);
+      setItems((prev) => prev.filter((entry) => entry._id !== item._id));
+      if (!item.isRead) {
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      }
+      toast.success("Notification removed");
+    } catch (error: unknown) {
+      toast.error(unwrapMessage(error, "Failed to remove notification"));
+    }
+  };
+
   return (
     <div ref={wrapperRef} className="relative">
       <button
@@ -149,19 +168,27 @@ export default function NotificationBell({
 
       {open ? (
         <div className={panelClassName}>
-          <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-            <div>
-              <p className="text-sm font-semibold text-gray-900">Notifications</p>
-              <p className="text-xs text-gray-500">{unreadCount} unread</p>
+          <div className="border-b border-gray-100 bg-linear-to-r from-slate-50 to-blue-50/70 px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Notifications</p>
+                <p className="text-xs text-gray-500">Latest {fetchLimit} (including read)</p>
+              </div>
+              <span className="rounded-full border border-blue-200 bg-blue-100 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
+                {unreadCount} unread
+              </span>
             </div>
-            <button
-              type="button"
-              onClick={handleMarkAllRead}
-              disabled={isMarkingAll || unreadCount === 0}
-              className="text-xs font-semibold text-blue-600 disabled:text-gray-400"
-            >
-              Mark all read
-            </button>
+            <div className="mt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={handleMarkAllRead}
+                disabled={isMarkingAll || unreadCount === 0}
+                className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-white px-2.5 py-1 text-xs font-semibold text-blue-700 disabled:opacity-50"
+              >
+                <CheckCheck className="h-3.5 w-3.5" />
+                Mark all read
+              </button>
+            </div>
           </div>
 
           <div className="max-h-96 overflow-y-auto">
@@ -177,8 +204,8 @@ export default function NotificationBell({
                     className={
                       "group px-4 py-3 transition-colors " +
                       (item.isRead
-                        ? "bg-white hover:bg-gray-50"
-                        : "bg-blue-50/70 hover:bg-blue-100/70")
+                        ? "bg-white hover:bg-slate-50"
+                        : "bg-blue-50/80 hover:bg-blue-100/70")
                     }
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -198,17 +225,27 @@ export default function NotificationBell({
                         <p className="mt-1 text-xs text-gray-400">{formatNotificationTime(item.createdAt)}</p>
                       </div>
 
-                      {!item.isRead ? (
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        {!item.isRead ? (
+                          <button
+                            type="button"
+                            onClick={() => handleMarkOneRead(item._id)}
+                            className="rounded-md px-2 py-1 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-100 hover:text-blue-700"
+                          >
+                            Mark read
+                          </button>
+                        ) : (
+                          <span className="rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-500">Read</span>
+                        )}
                         <button
                           type="button"
-                          onClick={() => handleMarkOneRead(item._id)}
-                          className="shrink-0 rounded-md px-2 py-1 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-100 hover:text-blue-700"
+                          onClick={() => handleRemove(item)}
+                          aria-label="Remove notification"
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 hover:border-rose-200 hover:text-rose-600"
                         >
-                          Mark read
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
-                      ) : (
-                        <span className="shrink-0 rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-500">Read</span>
-                      )}
+                      </div>
                     </div>
                   </li>
                 ))}

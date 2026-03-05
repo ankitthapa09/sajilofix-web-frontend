@@ -1,7 +1,6 @@
 import React from "react";
-
-import AdminSettingsClient from "./settingsClient";
+import AdminSettingsPanel from "@/features/admin/components/AdminSettingsPanel";
 
 export default async function AdminSettingsPage() {
-  return <AdminSettingsClient />;
+  return <AdminSettingsPanel />;
 }
