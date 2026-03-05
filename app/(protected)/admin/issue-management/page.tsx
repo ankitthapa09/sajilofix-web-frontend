@@ -202,9 +202,11 @@ export default function AdminIssueManagementPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-base font-semibold text-gray-900">Issue Management</h2>
-        <p className="text-sm text-gray-500">Monitor and manage all reported issues</p>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <StatCard title="Total Issues" value={stats.total} accent="border-slate-400" />
+        <StatCard title="Pending" value={stats.pending} accent="border-orange-500" />
+        <StatCard title="In Progress" value={stats.inProgress} accent="border-blue-600" />
+        <StatCard title="Resolved" value={stats.resolved} accent="border-emerald-500" />
       </div>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -238,17 +240,10 @@ export default function AdminIssueManagementPage() {
               onClick={() => setIsClearMapOpen(true)}
               className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 hover:border-gray-300"
             >
-              Open Clear Map
+              View in Map
             </button>
           </div>
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <StatCard title="Total Issues" value={stats.total} accent="border-slate-400" />
-        <StatCard title="Pending" value={stats.pending} accent="border-orange-500" />
-        <StatCard title="In Progress" value={stats.inProgress} accent="border-blue-600" />
-        <StatCard title="Resolved" value={stats.resolved} accent="border-emerald-500" />
       </div>
 
       {isLoading ? (

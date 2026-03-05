@@ -4,8 +4,14 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";
-import { ArrowLeft, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
-import { getIssueReport, updateIssueStatus, type IssueListItem } from "@/lib/api/issues";
+import { ArrowLeft, MapPin, ChevronLeft, ChevronRight, ExternalLink, X, Mail, Phone } from "lucide-react";
+import {
+  getIssueReport,
+  getIssueReporterProfile,
+  updateIssueStatus,
+  type IssueListItem,
+  type IssueReporterProfile,
+} from "@/lib/api/issues";
 import { toast } from "sonner";
 import IssueLocationMapSection from "@/features/shared/map/IssueLocationMapSection";
 
@@ -112,6 +118,10 @@ export default function IssueDetailsPageBase({
   const [error, setError] = useState<string | null>(null);
   const [activePhoto, setActivePhoto] = useState(0);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isReporterModalOpen, setIsReporterModalOpen] = useState(false);
+  const [isReporterLoading, setIsReporterLoading] = useState(false);
+  const [reporterError, setReporterError] = useState<string | null>(null);
+  const [reporterProfile, setReporterProfile] = useState<IssueReporterProfile | null>(null);
 
   useEffect(() => {
     if (!issueId) return;
@@ -144,6 +154,35 @@ export default function IssueDetailsPageBase({
 
   const urgencyClass = issue?.urgency ? URGENCY_STYLES[issue.urgency] ?? "bg-gray-100 text-gray-700 border-gray-200" : "";
   const statusClass = issue?.status ? STATUS_STYLES[issue.status] ?? "bg-gray-100 text-gray-700 border-gray-200" : "";
+  const reporterPhotoUrl = issue?.reporterPhoto ? resolvePhotoUrl(issue.reporterPhoto) : "";
+  const reporterInitial = (issue?.reporterName ?? "Citizen").trim().charAt(0).toUpperCase() || "C";
+
+  const reporterStatusClass =
+    reporterProfile?.status === "active"
+      ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+      : "bg-rose-100 text-rose-700 border-rose-200";
+
+  const reporterModalPhotoUrl = reporterProfile?.profilePhoto ? resolvePhotoUrl(reporterProfile.profilePhoto) : "";
+  const reporterModalInitial = (reporterProfile?.fullName ?? issue?.reporterName ?? "Citizen").trim().charAt(0).toUpperCase() || "C";
+  const reporterFullAddress =
+    reporterProfile?.fullAddress ||
+    [
+      reporterProfile?.tole,
+      reporterProfile?.wardNumber ? `Ward ${reporterProfile.wardNumber}` : "",
+      reporterProfile?.municipality,
+      reporterProfile?.district,
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+  useEffect(() => {
+    if (!isReporterModalOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isReporterModalOpen]);
 
   const goPrev = () => {
     if (!hasPhotos) return;
@@ -174,6 +213,23 @@ export default function IssueDetailsPageBase({
       toast.error(message);
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const openReporterProfileModal = async () => {
+    if (!issue?.reporterId) return;
+    setIsReporterModalOpen(true);
+    setIsReporterLoading(true);
+    setReporterError(null);
+
+    try {
+      const profile = await getIssueReporterProfile(issue.reporterId);
+      setReporterProfile(profile);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to load reporter profile";
+      setReporterError(message);
+    } finally {
+      setIsReporterLoading(false);
     }
   };
 
@@ -314,10 +370,44 @@ export default function IssueDetailsPageBase({
           <div className="space-y-5">
             <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
               <div className="text-sm font-semibold text-gray-700">Reporter</div>
-              <div className="mt-3 text-sm text-gray-600">
-                <div className="font-semibold text-gray-900">{issue.reporterName || "Citizen"}</div>
-                <div className="text-xs text-gray-400">Reported on {formatDate(issue.createdAt)}</div>
-              </div>
+              {issue.reporterId ? (
+                <button
+                  type="button"
+                  onClick={() => void openReporterProfileModal()}
+                  className="group mt-3 block rounded-2xl border border-gray-200 bg-linear-to-br from-white to-gray-50 p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+                      {reporterPhotoUrl ? (
+                        <Image
+                          src={reporterPhotoUrl}
+                          alt={issue.reporterName || "Reporter"}
+                          fill
+                          sizes="48px"
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-blue-50 text-sm font-semibold text-blue-700">
+                          {reporterInitial}
+                        </div>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate font-semibold text-gray-900">{issue.reporterName || "Citizen"}</div>
+                      <div className="text-xs text-gray-500">Reported on {formatDate(issue.createdAt)}</div>
+                    </div>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 transition-colors group-hover:bg-blue-100">
+                      View profile
+                      <ExternalLink className="h-3.5 w-3.5" />
+                    </span>
+                  </div>
+                </button>
+              ) : (
+                <div className="mt-3 text-sm text-gray-600">
+                  <div className="font-semibold text-gray-900">{issue.reporterName || "Citizen"}</div>
+                  <div className="text-xs text-gray-400">Reported on {formatDate(issue.createdAt)}</div>
+                </div>
+              )}
             </div>
 
             {canUpdateStatus ? (
@@ -362,6 +452,102 @@ export default function IssueDetailsPageBase({
               longitude={issue.location?.longitude}
               cardTitle="Location"
             />
+          </div>
+        </div>
+      ) : null}
+
+      {isReporterModalOpen ? (
+        <div className="fixed inset-0 z-80 bg-black/40 p-4 backdrop-blur-sm sm:p-6">
+          <div className="mx-auto flex h-full w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 sm:px-6">
+              <div>
+                <div className="text-sm font-semibold text-gray-900">Reporter Profile</div>
+                <div className="text-xs text-gray-500">Citizen details linked to this issue report</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsReporterModalOpen(false)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:text-gray-900"
+                aria-label="Close reporter profile"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+              {isReporterLoading ? (
+                <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-10 text-center text-sm text-gray-500">
+                  Loading reporter profile...
+                </div>
+              ) : reporterError ? (
+                <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-700">
+                  {reporterError}
+                </div>
+              ) : reporterProfile ? (
+                <div className="space-y-5">
+                  <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                    <div className="flex flex-wrap items-center gap-4">
+                      <div className="relative h-16 w-16 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                        {reporterModalPhotoUrl ? (
+                          <Image
+                            src={reporterModalPhotoUrl}
+                            alt={reporterProfile.fullName || "Reporter"}
+                            fill
+                            sizes="64px"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-blue-50 text-lg font-semibold text-blue-700">
+                            {reporterModalInitial}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xl font-semibold text-gray-900">{reporterProfile.fullName || issue?.reporterName || "Citizen"}</div>
+                        <div className="mt-1 flex flex-wrap items-center gap-2">
+                          <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${reporterStatusClass}`}>
+                            {(reporterProfile.status || "unknown").replace("_", " ")}
+                          </span>
+                          <span className="inline-flex rounded-full border border-gray-200 bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700">
+                            {reporterProfile.role || "citizen"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                      <div className="text-xs font-semibold text-gray-500">Email</div>
+                      <div className="mt-1 inline-flex items-center gap-2 text-sm text-gray-800">
+                        <Mail className="h-4 w-4 text-gray-400" />
+                        {reporterProfile.email || "-"}
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                      <div className="text-xs font-semibold text-gray-500">Phone</div>
+                      <div className="mt-1 inline-flex items-center gap-2 text-sm text-gray-800">
+                        <Phone className="h-4 w-4 text-gray-400" />
+                        {reporterProfile.phone || "-"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                    <div className="text-xs font-semibold text-gray-500">Full Address</div>
+                    <div className="mt-1 text-sm text-gray-800">{reporterFullAddress || "Address not available"}</div>
+                  </div>
+
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                    <div className="text-xs font-semibold text-gray-500">Citizenship Number</div>
+                    <div className="mt-1 text-sm font-medium text-gray-800">
+                      {reporterProfile.citizenshipNumber || "Not provided"}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
       ) : null}

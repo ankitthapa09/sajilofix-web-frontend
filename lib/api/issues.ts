@@ -12,6 +12,13 @@ export type IssueLocation = {
   landmark?: string;
 };
 
+export type IssueStatusHistoryItem = {
+  status: "pending" | "in_progress" | "resolved" | "rejected";
+  changedByRole: "admin" | "authority";
+  changedByUserId: string;
+  changedAt: string;
+};
+
 export type IssueListItem = {
   id: string;
   category: string;
@@ -22,11 +29,29 @@ export type IssueListItem = {
   location: IssueLocation;
   photos: string[];
   createdAt: string;
+  statusHistory?: IssueStatusHistoryItem[];
   reporterId?: string;
   reporterName?: string;
+  reporterPhoto?: string;
   statusUpdatedByRole?: "admin" | "authority";
   statusUpdatedByUserId?: string;
   statusUpdatedAt?: string;
+};
+
+export type IssueReporterProfile = {
+  id: string;
+  fullName: string;
+  email?: string;
+  phone?: string;
+  municipality?: string;
+  district?: string;
+  wardNumber?: string;
+  tole?: string;
+  fullAddress?: string;
+  citizenshipNumber?: string;
+  status?: "active" | "suspended";
+  profilePhoto?: string;
+  role?: "citizen" | "authority" | "admin";
 };
 
 export type UpdateIssueStatusResult = {
@@ -143,6 +168,15 @@ export async function getIssueReport(id: string) {
     return resp.data?.data as IssueListItem;
   } catch (error: unknown) {
     throw new Error(unwrapError(error, "Failed to load report"));
+  }
+}
+
+export async function getIssueReporterProfile(reporterId: string) {
+  try {
+    const resp = await apiClient.get(API_ENDPOINTS.issues.reporterProfile(reporterId));
+    return resp.data?.data as IssueReporterProfile;
+  } catch (error: unknown) {
+    throw new Error(unwrapError(error, "Failed to load reporter profile"));
   }
 }
 

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import ResetPasswordForm from "../_components/reset_password_form";
 import Image from "next/image";
 import loginbg from "../../../public/loginbg.png";
@@ -6,7 +7,15 @@ export default function ResetPasswordPage() {
   return (
     <div className="min-h-screen flex">
       <div className="flex-1 flex items-center justify-center bg-white">
-        <ResetPasswordForm />
+        <Suspense
+          fallback={
+            <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-4 py-8 text-sm text-gray-500">
+              Loading reset form...
+            </div>
+          }
+        >
+          <ResetPasswordForm />
+        </Suspense>
       </div>
 
       <div className="hidden lg:flex flex-1 bg-linear-to-br from-[#1F9D55] via-[#2BB673] to-[#49C28C] relative overflow-hidden">

@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
-  BadgeCheck,
   Bell,
   CheckCircle2,
   Clock3,
@@ -13,7 +13,6 @@ import {
   Trash2,
   User,
   UserCheck,
-  UserX,
   Users,
   X,
   AlertCircle,
@@ -35,6 +34,7 @@ import {
   adminUpdateAuthority,
   adminUpdateCitizen,
 } from "@/lib/api/admin";
+import { listAuthorityIssues, type IssueListItem } from "@/lib/api/issues";
 import { toast } from "sonner";
 
 type Role = "admin" | "authority" | "citizen";
@@ -72,7 +72,7 @@ function initialsFromName(name: string) {
   return (a + b).toUpperCase();
 }
 
-type IssueStatus = "pending" | "in-progress" | "resolved";
+type IssueStatus = "pending" | "in_progress" | "resolved" | "rejected";
 type RecentIssue = {
   id: string;
   title: string;
@@ -82,8 +82,19 @@ type RecentIssue = {
 
 function issueBadge(status: IssueStatus) {
   if (status === "pending") return "bg-orange-100 text-orange-700";
-  if (status === "in-progress") return "bg-blue-100 text-blue-700";
+  if (status === "in_progress") return "bg-blue-100 text-blue-700";
+  if (status === "rejected") return "bg-rose-100 text-rose-700";
   return "bg-emerald-100 text-emerald-700";
+}
+
+function formatIssueLocation(issue: IssueListItem) {
+  const parts = [
+    issue.location?.address,
+    issue.location?.ward ? `Ward ${issue.location.ward}` : "",
+    issue.location?.municipality,
+    issue.location?.district,
+  ].filter(Boolean);
+  return parts.length ? parts.join(", ") : "Unknown location";
 }
 
 const userFormSchema = z
@@ -223,6 +234,8 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<AdminUserRow[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [loadError, setLoadError] = useState<string>("");
+  const [issues, setIssues] = useState<IssueListItem[]>([]);
+  const [loadingIssues, setLoadingIssues] = useState(true);
   const [page, setPage] = useState(1);
   const [pageMeta, setPageMeta] = useState<{ total: number; page: number; limit: number; totalPages: number } | null>(null);
   const pageSize = 8;
@@ -292,17 +305,39 @@ export default function AdminDashboard() {
   }, [loadUsers]);
 
   useEffect(() => {
+    let isMounted = true;
+
+    listAuthorityIssues()
+      .then((data) => {
+        if (!isMounted) return;
+        setIssues(data);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setIssues([]);
+      })
+      .finally(() => {
+        if (!isMounted) return;
+        setLoadingIssues(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
     setPage(1);
   }, [roleFilter, statusFilter]);
 
   const stats = useMemo(() => {
-    const totalUsers = users.length;
+    const totalUsers = pageMeta?.total ?? users.length;
     const citizens = users.filter((u) => u.role === "citizen").length;
     const authorities = users.filter((u) => u.role === "authority").length;
     const active = users.filter((u) => u.status === "active").length;
     const suspended = users.filter((u) => u.status === "suspended").length;
     return { totalUsers, citizens, authorities, active, suspended };
-  }, [users]);
+  }, [users, pageMeta?.total]);
 
   const recentUsers = useMemo(() => {
     return [...users]
@@ -312,22 +347,27 @@ export default function AdminDashboard() {
   }, [users]);
 
   const recentIssues = useMemo<RecentIssue[]>(() => {
-    // Placeholder until issue APIs are connected.
-    return [
-      { id: "i1", title: "Broken Street Light", location: "Thamel, Ward 26", status: "pending" },
-      { id: "i2", title: "Pothole on Main Road", location: "New Baneshwor", status: "in-progress" },
-      { id: "i3", title: "Garbage Overflow", location: "Lazimpat", status: "resolved" },
-    ];
-  }, []);
+    return [...issues]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 5)
+      .map((issue) => ({
+        id: issue.id,
+        title: issue.title,
+        location: formatIssueLocation(issue),
+        status: issue.status as IssueStatus,
+      }));
+  }, [issues]);
 
   const issueStats = useMemo(() => {
-    const total = recentIssues.length;
-    const pending = recentIssues.filter((i) => i.status === "pending").length;
-    const urgent = pending;
-    const resolved = recentIssues.filter((i) => i.status === "resolved").length;
-    const inProgress = recentIssues.filter((i) => i.status === "in-progress").length;
+    const total = issues.length;
+    const pending = issues.filter((i) => i.status === "pending").length;
+    const resolved = issues.filter((i) => i.status === "resolved").length;
+    const inProgress = issues.filter((i) => i.status === "in_progress").length;
+    const urgent = issues.filter((i) => i.urgency === "urgent" && i.status !== "resolved").length;
     return { total, pending, urgent, resolved, inProgress };
-  }, [recentIssues]);
+  }, [issues]);
+
+  const resolvedRate = issueStats.total > 0 ? Math.round((issueStats.resolved / issueStats.total) * 100) : 0;
 
   const filteredUsers = useMemo(() => users, [users]);
 
@@ -662,7 +702,7 @@ export default function AdminDashboard() {
           subtitle={
             <span className="inline-flex items-center gap-1.5">
               <CircleDot className="w-4 h-4" />
-              33% completion rate
+              {resolvedRate}% completion rate
             </span>
           }
           tone="emerald"
@@ -697,34 +737,40 @@ export default function AdminDashboard() {
         <section id="issues" className="bg-white border border-gray-200 rounded-2xl shadow-sm">
           <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
             <h2 className="font-semibold text-gray-900">Recent Issues</h2>
-            <button type="button" className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-700">
+            <Link href="/admin/issue-management" className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-700">
               View All <ArrowRight className="w-4 h-4" />
-            </button>
+            </Link>
           </div>
           <div className="p-6 space-y-4">
-            {recentIssues.map((issue) => (
-              <div
-                key={issue.id}
-                className="flex items-center justify-between gap-4 rounded-xl bg-gray-50 px-4 py-3 transition-colors hover:bg-gray-100"
-              >
-                <div className="min-w-0">
-                  <div className="font-semibold text-gray-900 truncate">{issue.title}</div>
-                  <div className="text-sm text-gray-500 truncate">{issue.location}</div>
+            {loadingIssues ? (
+              <div className="text-sm text-gray-500">Loading recent issues...</div>
+            ) : recentIssues.length ? (
+              recentIssues.map((issue) => (
+                <div
+                  key={issue.id}
+                  className="flex items-center justify-between gap-4 rounded-xl bg-gray-50 px-4 py-3 transition-colors hover:bg-gray-100"
+                >
+                  <div className="min-w-0">
+                    <div className="font-semibold text-gray-900 truncate">{issue.title}</div>
+                    <div className="text-sm text-gray-500 truncate">{issue.location}</div>
+                  </div>
+                  <span className={`shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${issueBadge(issue.status)}`}>
+                    {issue.status.replace(/_/g, " ")}
+                  </span>
                 </div>
-                <span className={`shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${issueBadge(issue.status)}`}>
-                  {issue.status}
-                </span>
-              </div>
-            ))}
+              ))
+            ) : (
+              <div className="text-sm text-gray-500">No issues found.</div>
+            )}
           </div>
         </section>
 
         <section className="bg-white border border-gray-200 rounded-2xl shadow-sm">
           <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
             <h2 className="font-semibold text-gray-900">Recent Users</h2>
-            <button type="button" className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-700">
+            <Link href="/admin/user-management" className="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:text-indigo-700">
               View All <ArrowRight className="w-4 h-4" />
-            </button>
+            </Link>
           </div>
 
           <div className="p-6 space-y-3">

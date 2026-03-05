@@ -149,37 +149,72 @@ export default function ReportDetailsPage() {
       title: string;
       by: string;
       icon: typeof ClipboardCheck;
+      completed: boolean;
+      isCurrent: boolean;
+      timestamp?: string;
     }>;
+
+    const history = [...(issue.statusHistory ?? [])].sort(
+      (a, b) => new Date(a.changedAt).getTime() - new Date(b.changedAt).getTime()
+    );
+
+    const firstChange = history[0];
+    const inProgressChange = history.find((item) => item.status === "in_progress");
+    const resolvedChange = history.find((item) => item.status === "resolved");
+    const rejectedChange = history.find((item) => item.status === "rejected");
+
+    const isInProgress = issue.status === "in_progress";
+    const isResolved = issue.status === "resolved";
+    const isRejected = issue.status === "rejected";
+
+    const verifiedBy = firstChange?.changedByRole ? `by ${firstChange.changedByRole === "admin" ? "Admin" : "Authority"}` : "by Authority";
+    const progressBy = inProgressChange?.changedByRole
+      ? `by ${inProgressChange.changedByRole === "admin" ? "Admin" : "Authority"}`
+      : "by Authority";
+    const finalBy = (resolvedChange ?? rejectedChange)?.changedByRole
+      ? `by ${(resolvedChange ?? rejectedChange)?.changedByRole === "admin" ? "Admin" : "Authority"}`
+      : "Pending final decision";
+
+    const finalTitle = isRejected ? "Rejected" : "Resolved";
 
     return [
       {
         title: "Issue Reported",
         by: "by You",
         icon: ClipboardCheck,
+        completed: true,
+        isCurrent: issue.status === "pending",
+        timestamp: issue.createdAt,
       },
       {
         title: "Report Verified and Categorized",
-        by: "by Authority",
+        by: verifiedBy,
         icon: BadgeCheck,
+        completed: Boolean(firstChange) || issue.status !== "pending",
+        isCurrent: issue.status === "pending" && Boolean(firstChange),
+        timestamp:
+          firstChange?.changedAt ||
+          (issue.status !== "pending" ? issue.statusUpdatedAt || undefined : undefined),
       },
       {
         title: "Work in Progress",
-        by: "by Authority",
+        by: progressBy,
         icon: Wrench,
+        completed: Boolean(inProgressChange) || isInProgress || isResolved,
+        isCurrent: isInProgress,
+        timestamp: inProgressChange?.changedAt || (isInProgress ? issue.statusUpdatedAt || undefined : undefined),
       },
       {
-        title: "Resolved",
-        by: "by Authority",
+        title: finalTitle,
+        by: finalBy,
         icon: User,
+        completed: isRejected ? Boolean(rejectedChange) || isRejected : Boolean(resolvedChange) || isResolved,
+        isCurrent: isRejected || isResolved,
+        timestamp:
+          (isRejected ? rejectedChange?.changedAt : resolvedChange?.changedAt) ||
+          ((isRejected || isResolved) ? issue.statusUpdatedAt || undefined : undefined),
       },
     ];
-  }, [issue]);
-
-  const activeStepIndex = useMemo(() => {
-    if (!issue) return 0;
-    if (issue.status === "resolved") return 3;
-    if (issue.status === "in_progress") return 2;
-    return 1;
   }, [issue]);
 
   const photos = issue?.photos ?? [];
@@ -344,8 +379,8 @@ export default function ReportDetailsPage() {
               <ol className="mt-4 space-y-6 border-l border-gray-200 pl-6">
                 {timelineSteps.map((step, index) => {
                   const Icon = step.icon;
-                  const isDone = index <= activeStepIndex;
-                  const isCurrent = index === activeStepIndex;
+                  const isDone = step.completed;
+                  const isCurrent = step.isCurrent;
 
                   return (
                     <li key={step.title} className="relative pl-8">
@@ -363,7 +398,9 @@ export default function ReportDetailsPage() {
                         <div className={isCurrent ? "font-semibold text-gray-900" : "font-semibold text-gray-700"}>
                           {step.title}
                         </div>
-                        <div className="text-xs text-gray-400">{formatDateTime(issue.createdAt)}</div>
+                        <div className="text-xs text-gray-400">
+                          {step.timestamp ? formatDateTime(step.timestamp) : "Not reached yet"}
+                        </div>
                         <div className="text-xs text-gray-400">{step.by}</div>
                       </div>
                     </li>

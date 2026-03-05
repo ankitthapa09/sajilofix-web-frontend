@@ -19,6 +19,7 @@ export const API_ENDPOINTS = {
     list: "/api/issues",
     create: "/api/issues",
     priority: "/api/issues/priority",
+    reporterProfile: (reporterId: string) => `/api/issues/reporters/${reporterId}`,
     reverseGeocode: "/api/issues/reverse-geocode",
     get: (id: string) => `/api/issues/${id}`,
     delete: (id: string) => `/api/issues/${id}`,
