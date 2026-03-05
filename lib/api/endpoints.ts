@@ -23,4 +23,10 @@ export const API_ENDPOINTS = {
     get: (id: string) => `/api/issues/${id}`,
     updateStatus: (id: string) => `/api/issues/${id}/status`,
   },
+  notifications: {
+    list: "/api/notifications",
+    unreadCount: "/api/notifications/unread-count",
+    markRead: (id: string) => `/api/notifications/${id}/read`,
+    markAllRead: "/api/notifications/read-all",
+  },
 } as const;

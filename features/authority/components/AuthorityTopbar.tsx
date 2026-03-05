@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { Bell, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
+import NotificationBell from "@/features/shared/notifications/NotificationBell";
 
 type Props = {
   user: {
@@ -60,14 +61,7 @@ export default function AuthorityTopbar({ user, onMenuClick }: Props) {
             3 Pending Review
           </div>
 
-          <button
-            className="bg-white border border-gray-200 px-3 py-2 rounded-lg relative transition-all hover:-translate-y-px hover:shadow-sm"
-            aria-label="Notifications"
-            type="button"
-          >
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
-            <Bell className="w-5 h-5 text-gray-700" />
-          </button>
+          <NotificationBell />
 
           <div className="hidden sm:block h-8 w-px bg-gray-200" />
 
