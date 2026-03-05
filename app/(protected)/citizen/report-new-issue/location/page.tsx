@@ -11,6 +11,7 @@ import {
   ClipboardList,
   MapPin,
   AlertTriangle,
+  X,
 } from "lucide-react";
 import { useReportIssue } from "@/features/citizen/components/ReportIssueProvider";
 import { reverseGeocodeLocation } from "@/lib/api/issues";
@@ -71,13 +72,31 @@ export default function ReportNewIssueLocationStep() {
   const { draft, updateLocation } = useReportIssue();
   const [isAutoFilling, setIsAutoFilling] = React.useState(false);
   const [autoFillError, setAutoFillError] = React.useState<string | null>(null);
+  const [isClearMapOpen, setIsClearMapOpen] = React.useState(false);
+  const [clearMapPickedLocation, setClearMapPickedLocation] = React.useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
 
   const lat = Number(draft.location.latitude);
   const lng = Number(draft.location.longitude);
-  const pickedLocation =
-    Number.isFinite(lat) && Number.isFinite(lng) && isWithinNepal(lat, lng)
-      ? { latitude: lat, longitude: lng }
-      : null;
+  const pickedLocation = React.useMemo(
+    () =>
+      Number.isFinite(lat) && Number.isFinite(lng) && isWithinNepal(lat, lng)
+        ? { latitude: lat, longitude: lng }
+        : null,
+    [lat, lng]
+  );
+
+  React.useEffect(() => {
+    if (!isClearMapOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    setClearMapPickedLocation(pickedLocation);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isClearMapOpen, pickedLocation]);
 
   React.useEffect(() => {
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
@@ -119,6 +138,26 @@ export default function ReportNewIssueLocationStep() {
       }
     },
     [draft.location.address, draft.location.district, draft.location.landmark, draft.location.municipality, draft.location.ward, updateLocation],
+  );
+
+  const commitPickedLocation = React.useCallback(
+    (latitude: number, longitude: number) => {
+      const fixedLat = Number(latitude.toFixed(6));
+      const fixedLng = Number(longitude.toFixed(6));
+
+      if (!isWithinNepal(fixedLat, fixedLng)) {
+        setAutoFillError("Selected point is outside Nepal. Please pick a location inside Nepal.");
+        return;
+      }
+
+      updateLocation({
+        latitude: fixedLat.toFixed(6),
+        longitude: fixedLng.toFixed(6),
+      });
+
+      void autoFillLocation(fixedLat, fixedLng);
+    },
+    [autoFillLocation, updateLocation]
   );
 
   return (
@@ -190,26 +229,21 @@ export default function ReportNewIssueLocationStep() {
             </div>
 
             <div className="mt-6 rounded-2xl border border-gray-200 bg-slate-100/70 p-3">
+              <div className="mb-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsClearMapOpen(true)}
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 hover:border-gray-300"
+                >
+                  Open Clear Map
+                </button>
+              </div>
               <IssueMapClient
                 pickMode
                 center={[27.7172, 85.324]}
                 zoom={12}
                 pickedLocation={pickedLocation}
-                onPickLocation={(latitude, longitude) => {
-                  const fixedLat = Number(latitude.toFixed(6));
-                  const fixedLng = Number(longitude.toFixed(6));
-
-                  if (!isWithinNepal(fixedLat, fixedLng)) {
-                    setAutoFillError("Selected point is outside Nepal. Please pick a location inside Nepal.");
-                    return;
-                  }
-
-                  updateLocation({
-                    latitude: fixedLat.toFixed(6),
-                    longitude: fixedLng.toFixed(6),
-                  });
-                  void autoFillLocation(fixedLat, fixedLng);
-                }}
+                onPickLocation={commitPickedLocation}
                 className="h-80 w-full overflow-hidden rounded-xl border border-gray-200"
               />
               <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-600">
@@ -335,6 +369,78 @@ export default function ReportNewIssueLocationStep() {
           </div>
         </div>
        </section>
+
+      {isClearMapOpen ? (
+        <div className="fixed inset-0 z-80 bg-black/40 p-4 backdrop-blur-sm sm:p-6">
+          <div className="mx-auto flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 sm:px-6">
+              <div>
+                <div className="text-sm font-semibold text-gray-900">Select Issue Location</div>
+                <div className="text-xs text-gray-500">Click anywhere on map to pin exact location</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsClearMapOpen(false)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:text-gray-900"
+                aria-label="Close clear map"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 p-4 sm:p-6">
+              <IssueMapClient
+                pickMode
+                center={[27.7172, 85.324]}
+                zoom={13}
+                pickedLocation={clearMapPickedLocation ?? pickedLocation}
+                onPickLocation={(latitude, longitude) => {
+                  const fixedLat = Number(latitude.toFixed(6));
+                  const fixedLng = Number(longitude.toFixed(6));
+
+                  if (!isWithinNepal(fixedLat, fixedLng)) {
+                    setAutoFillError("Selected point is outside Nepal. Please pick a location inside Nepal.");
+                    return;
+                  }
+
+                  setAutoFillError(null);
+                  setClearMapPickedLocation({ latitude: fixedLat, longitude: fixedLng });
+                }}
+                className="h-full w-full overflow-hidden rounded-xl border border-gray-200"
+              />
+            </div>
+
+            <div className="flex flex-col gap-3 border-t border-gray-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <div className="text-xs text-gray-600">
+                {clearMapPickedLocation
+                  ? `Selected: ${clearMapPickedLocation.latitude.toFixed(6)}, ${clearMapPickedLocation.longitude.toFixed(6)}`
+                  : "Click on the map to choose a location"}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsClearMapOpen(false)}
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 hover:border-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={!clearMapPickedLocation}
+                  onClick={() => {
+                    if (!clearMapPickedLocation) return;
+                    commitPickedLocation(clearMapPickedLocation.latitude, clearMapPickedLocation.longitude);
+                    setIsClearMapOpen(false);
+                  }}
+                  className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+                >
+                  Use this location
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
      </div>
    );
  }

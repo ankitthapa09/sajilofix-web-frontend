@@ -33,6 +33,14 @@ export default function CitizenShell({ children }: Props) {
       };
     }
 
+    if (pathname.startsWith("/citizen/map")) {
+      return {
+        title: "Explore Map",
+        subtitle: "Explore your reports geographically and track progress.",
+        showCta: true,
+      };
+    }
+
     return {
       title: "Dashboard Overview",
       subtitle: "Welcome back! Here is whats happening with your reports.",
