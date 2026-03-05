@@ -3,8 +3,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Eye, FileText, X } from "lucide-react";
-import { listAuthorityIssues, type IssueListItem } from "@/lib/api/issues";
+import { Eye, FileText, Search, Trash2, X } from "lucide-react";
+import { deleteIssueReport, listAuthorityIssues, type IssueListItem } from "@/lib/api/issues";
+import type { MapIssuePoint } from "@/features/shared/map/IssueMapClient";
+import { toast } from "sonner";
 
 const IssueMapClient = dynamic(() => import("@/features/shared/map/IssueMapClient"), {
   ssr: false,
@@ -78,6 +80,11 @@ export default function AdminIssueManagementPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedIssue, setSelectedIssue] = useState<IssueListItem | null>(null);
+  const [isClearMapOpen, setIsClearMapOpen] = useState(false);
+  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [deletingIssueId, setDeletingIssueId] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -112,6 +119,15 @@ export default function AdminIssueManagementPage() {
     };
   }, [selectedIssue]);
 
+  useEffect(() => {
+    if (!isClearMapOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isClearMapOpen]);
+
   const stats = useMemo(() => {
     const total = issues.length;
     const pending = issues.filter((i) => i.status === "pending").length;
@@ -120,11 +136,112 @@ export default function AdminIssueManagementPage() {
     return { total, pending, inProgress, resolved };
   }, [issues]);
 
+  const categories = useMemo(() => {
+    return Array.from(new Set(issues.map((issue) => issue.category))).sort();
+  }, [issues]);
+
+  const filteredIssues = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    return issues.filter((issue) => {
+      if (categoryFilter !== "all" && issue.category !== categoryFilter) return false;
+      if (!normalized) return true;
+      const haystack = [issue.title, issue.category, issue.location?.address, issue.location?.municipality, issue.location?.district]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(normalized);
+    });
+  }, [issues, query, categoryFilter]);
+
+  const mapIssues = useMemo(() => {
+    return filteredIssues.filter(
+      (issue) => typeof issue.location?.latitude === "number" && typeof issue.location?.longitude === "number"
+    );
+  }, [filteredIssues]);
+
+  const mapPoints: MapIssuePoint[] = useMemo(
+    () =>
+      mapIssues.map((issue) => ({
+        id: issue.id,
+        title: issue.title,
+        status: issue.status,
+        category: issue.category,
+        latitude: issue.location.latitude as number,
+        longitude: issue.location.longitude as number,
+        locationLabel: formatLocation(issue),
+      })),
+    [mapIssues]
+  );
+
+  useEffect(() => {
+    if (!isClearMapOpen) return;
+    if (!mapIssues.length) {
+      setSelectedIssueId(null);
+      return;
+    }
+    if (!selectedIssueId || !mapIssues.some((issue) => issue.id === selectedIssueId)) {
+      setSelectedIssueId(mapIssues[0].id);
+    }
+  }, [isClearMapOpen, mapIssues, selectedIssueId]);
+
+  const onDeleteIssue = async (issueId: string) => {
+    if (!window.confirm("Delete this issue? This action cannot be undone.")) return;
+
+    setDeletingIssueId(issueId);
+    try {
+      await deleteIssueReport(issueId);
+      setIssues((prev) => prev.filter((issue) => issue.id !== issueId));
+      toast.success("Issue deleted");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Failed to delete issue";
+      toast.error(message);
+    } finally {
+      setDeletingIssueId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-base font-semibold text-gray-900">Issue Management</h2>
         <p className="text-sm text-gray-500">Monitor and manage all reported issues</p>
+      </div>
+
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="relative w-full lg:max-w-sm">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search issues..."
+              className="h-10 w-full rounded-lg border border-gray-200 bg-gray-50 pl-9 pr-3 text-sm text-gray-700 focus:border-blue-300 focus:outline-none"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={categoryFilter}
+              onChange={(event) => setCategoryFilter(event.target.value)}
+              className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm text-gray-700"
+            >
+              <option value="all">All Categories</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category.replace(/_/g, " ")}
+                </option>
+              ))}
+            </select>
+
+            <button
+              type="button"
+              onClick={() => setIsClearMapOpen(true)}
+              className="h-10 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 hover:border-gray-300"
+            >
+              Open Clear Map
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -160,7 +277,7 @@ export default function AdminIssueManagementPage() {
               </thead>
 
               <tbody className="divide-y divide-gray-200">
-                {issues.map((issue) => (
+                {filteredIssues.map((issue) => (
                   <tr key={issue.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 font-semibold text-gray-900">{issue.title}</td>
                     <td className="px-4 py-3 text-gray-700">{issue.category}</td>
@@ -194,6 +311,15 @@ export default function AdminIssueManagementPage() {
                         >
                           <FileText className="w-4 h-4" />
                         </Link>
+                        <button
+                          type="button"
+                          aria-label="Delete issue"
+                          disabled={deletingIssueId === issue.id}
+                          className="text-rose-600 hover:text-rose-700 disabled:opacity-50"
+                          onClick={() => void onDeleteIssue(issue.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -203,6 +329,43 @@ export default function AdminIssueManagementPage() {
           </div>
         </div>
       )}
+
+      {isClearMapOpen ? (
+        <div className="fixed inset-0 z-80 bg-black/40 p-4 backdrop-blur-sm sm:p-6">
+          <div className="mx-auto flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 sm:px-6">
+              <div>
+                <div className="text-sm font-semibold text-gray-900">Issues Clear Map</div>
+                <div className="text-xs text-gray-500">Showing all mapped issues for current search/filter</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsClearMapOpen(false)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:text-gray-900"
+                aria-label="Close clear map"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 p-4 sm:p-6">
+              {mapPoints.length ? (
+                <IssueMapClient
+                  issues={mapPoints}
+                  selectedIssueId={selectedIssueId ?? undefined}
+                  onSelectIssue={(id) => setSelectedIssueId(id)}
+                  className="h-full"
+                  showLegend
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-500">
+                  No mapped issues available for current filters.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {selectedIssue ? (
         <div className="fixed inset-0 z-80 bg-black/40 p-4 backdrop-blur-sm sm:p-6">

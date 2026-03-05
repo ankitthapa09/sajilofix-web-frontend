@@ -21,6 +21,7 @@ export const API_ENDPOINTS = {
     priority: "/api/issues/priority",
     reverseGeocode: "/api/issues/reverse-geocode",
     get: (id: string) => `/api/issues/${id}`,
+    delete: (id: string) => `/api/issues/${id}`,
     updateStatus: (id: string) => `/api/issues/${id}/status`,
   },
   notifications: {

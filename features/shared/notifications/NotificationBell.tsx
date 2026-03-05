@@ -35,9 +35,15 @@ function unwrapMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
+function formatUnreadCountBadge(count: number) {
+  if (count <= 0) return "";
+  if (count > 99) return "99+";
+  return String(count);
+}
+
 export default function NotificationBell({
-  buttonClassName = "bg-white border border-gray-200 px-3 py-2 rounded-lg relative transition-all hover:-translate-y-px hover:shadow-sm",
-  panelClassName = "absolute right-0 z-40 mt-2 w-[min(26rem,calc(100vw-2rem))] rounded-xl border border-gray-200 bg-white shadow-lg",
+  buttonClassName = "relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-xs transition-all hover:-translate-y-px hover:border-gray-300 hover:shadow-sm",
+  panelClassName = "absolute right-0 z-40 mt-2 w-[min(26rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl",
   limit = 10,
 }: Props) {
   const [open, setOpen] = React.useState(false);
@@ -46,27 +52,27 @@ export default function NotificationBell({
   const [unreadCount, setUnreadCount] = React.useState(0);
   const [items, setItems] = React.useState<NotificationItem[]>([]);
   const wrapperRef = React.useRef<HTMLDivElement | null>(null);
+  const fetchLimit = Math.max(10, limit);
 
   const loadUnread = React.useCallback(async () => {
     try {
       const count = await getUnreadNotificationCount();
       setUnreadCount(Math.max(0, count));
     } catch {
-      // ignore counter failures to avoid noisy UX
     }
   }, []);
 
   const loadNotifications = React.useCallback(async () => {
     setIsLoading(true);
     try {
-      const data = await listNotifications({ page: 1, limit });
+      const data = await listNotifications({ page: 1, limit: fetchLimit });
       setItems(data.items ?? []);
     } catch (error: unknown) {
       toast.error(unwrapMessage(error, "Failed to load notifications"));
     } finally {
       setIsLoading(false);
     }
-  }, [limit]);
+  }, [fetchLimit]);
 
   React.useEffect(() => {
     void loadUnread();
@@ -133,8 +139,12 @@ export default function NotificationBell({
         className={buttonClassName}
         onClick={() => setOpen((prev) => !prev)}
       >
-        {unreadCount > 0 ? <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" /> : null}
-        <Bell className="w-5 h-5 text-gray-700" />
+        {unreadCount > 0 ? (
+          <span className="pointer-events-none absolute -top-2 left-1/2 inline-flex h-4.5 min-w-4.5 -translate-x-1/2 items-center justify-center rounded-full border border-white bg-red-500 px-1 text-[9px] font-bold leading-none text-white shadow-sm">
+            {formatUnreadCountBadge(unreadCount)}
+          </span>
+        ) : null}
+        <Bell className="h-4.5 w-4.5 text-gray-700" strokeWidth={2.25} />
       </button>
 
       {open ? (
@@ -162,14 +172,29 @@ export default function NotificationBell({
             ) : (
               <ul className="divide-y divide-gray-100">
                 {items.map((item) => (
-                  <li key={item._id} className="px-4 py-3">
+                  <li
+                    key={item._id}
+                    className={
+                      "group px-4 py-3 transition-colors " +
+                      (item.isRead
+                        ? "bg-white hover:bg-gray-50"
+                        : "bg-blue-50/70 hover:bg-blue-100/70")
+                    }
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                        <p
+                          className={
+                            "text-xs font-semibold uppercase tracking-wide " +
+                            (item.isRead ? "text-gray-400" : "text-blue-600")
+                          }
+                        >
                           {formatTypeLabel(item.type)}
                         </p>
-                        <p className="mt-0.5 text-sm font-semibold text-gray-900">{item.title}</p>
-                        <p className="mt-1 text-sm text-gray-600">{item.message}</p>
+                        <p className="mt-0.5 text-sm font-semibold text-gray-900 group-hover:text-gray-950">
+                          {item.title}
+                        </p>
+                        <p className={"mt-1 text-sm " + (item.isRead ? "text-gray-600" : "text-gray-700")}>{item.message}</p>
                         <p className="mt-1 text-xs text-gray-400">{formatNotificationTime(item.createdAt)}</p>
                       </div>
 
@@ -177,12 +202,12 @@ export default function NotificationBell({
                         <button
                           type="button"
                           onClick={() => handleMarkOneRead(item._id)}
-                          className="shrink-0 text-xs font-semibold text-blue-600"
+                          className="shrink-0 rounded-md px-2 py-1 text-xs font-semibold text-blue-600 transition-colors hover:bg-blue-100 hover:text-blue-700"
                         >
                           Mark read
                         </button>
                       ) : (
-                        <span className="shrink-0 text-xs text-gray-400">Read</span>
+                        <span className="shrink-0 rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-500">Read</span>
                       )}
                     </div>
                   </li>

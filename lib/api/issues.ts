@@ -146,6 +146,15 @@ export async function getIssueReport(id: string) {
   }
 }
 
+export async function deleteIssueReport(id: string) {
+  try {
+    const resp = await apiClient.delete(API_ENDPOINTS.issues.delete(id));
+    return resp.data as { success?: boolean; message?: string; data?: { id: string } };
+  } catch (error: unknown) {
+    throw new Error(unwrapError(error, "Failed to delete issue"));
+  }
+}
+
 export async function reverseGeocodeLocation(latitude: number, longitude: number) {
   try {
     const resp = await apiClient.get(API_ENDPOINTS.issues.reverseGeocode, {
