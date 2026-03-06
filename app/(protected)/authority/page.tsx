@@ -217,8 +217,7 @@ export default function AuthorityDashboardPage() {
       ) : (
         <>
           <div className="rounded-2xl border border-blue-100 bg-linear-to-r from-blue-50 via-indigo-50 to-sky-50 p-5 shadow-sm">
-            <div className="text-xs font-semibold uppercase tracking-wide text-blue-600">Overview</div>
-            <div className="mt-1 text-2xl font-semibold text-gray-900">
+            <div className="text-2xl font-semibold text-gray-900">
               {greeting}, {viewerName}
             </div>
             <div className="mt-1 text-sm text-gray-600">{today}</div>

@@ -50,7 +50,7 @@ function formatUnreadCountBadge(count: number) {
 export default function NotificationBell({
   buttonClassName = "relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-xs transition-all hover:-translate-y-px hover:border-gray-300 hover:shadow-sm",
   panelClassName = "absolute right-0 z-40 mt-2 w-[min(26rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl",
-  limit = 10,
+  limit = 20,
 }: Props) {
   const [open, setOpen] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -58,7 +58,7 @@ export default function NotificationBell({
   const [unreadCount, setUnreadCount] = React.useState(0);
   const [items, setItems] = React.useState<NotificationItem[]>([]);
   const wrapperRef = React.useRef<HTMLDivElement | null>(null);
-  const fetchLimit = Math.min(Math.max(1, limit), 10);
+  const fetchLimit = Math.min(Math.max(1, limit), 50);
 
   const loadUnread = React.useCallback(async () => {
     try {
@@ -191,7 +191,7 @@ export default function NotificationBell({
             </div>
           </div>
 
-          <div className="max-h-96 overflow-y-auto">
+          <div className="max-h-88 overflow-y-auto overscroll-contain">
             {isLoading ? (
               <div className="px-4 py-8 text-center text-sm text-gray-500">Loading notifications...</div>
             ) : items.length === 0 ? (

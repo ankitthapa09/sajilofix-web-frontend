@@ -174,13 +174,16 @@ export default function AdminIssueManagementPage() {
   );
 
   useEffect(() => {
-    if (!isClearMapOpen) return;
+    if (!isClearMapOpen) {
+      setSelectedIssueId(null);
+      return;
+    }
     if (!mapIssues.length) {
       setSelectedIssueId(null);
       return;
     }
-    if (!selectedIssueId || !mapIssues.some((issue) => issue.id === selectedIssueId)) {
-      setSelectedIssueId(mapIssues[0].id);
+    if (selectedIssueId && !mapIssues.some((issue) => issue.id === selectedIssueId)) {
+      setSelectedIssueId(null);
     }
   }, [isClearMapOpen, mapIssues, selectedIssueId]);
 
@@ -350,6 +353,8 @@ export default function AdminIssueManagementPage() {
                   selectedIssueId={selectedIssueId ?? undefined}
                   onSelectIssue={(id) => setSelectedIssueId(id)}
                   className="h-full"
+                  zoom={11}
+                  selectedZoom={17}
                   showLegend
                 />
               ) : (

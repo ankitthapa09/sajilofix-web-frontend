@@ -21,9 +21,9 @@ const nav = [
   { name: "Issue Management", href: "/admin/issue-management", icon: FolderKanban },
   { name: "Departments", href: "/admin/departments", icon: BarChart3 },
   { name: "Categories", href: "/admin/categories", icon: Tags },
-  { name: "Announcements", href: "/admin#announcements", icon: Bell },
-  { name: "Analytics", href: "/admin#analytics", icon: BarChart3 },
-  { name: "Activity Logs", href: "/admin#activity", icon: Activity },
+  { name: "Announcements", href: "/admin/announcements", icon: Bell },
+  { name: "Analytics", href: "/admin/analytics", icon: BarChart3 },
+  { name: "Activity Logs", href: "/admin/activity-logs", icon: Activity },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 

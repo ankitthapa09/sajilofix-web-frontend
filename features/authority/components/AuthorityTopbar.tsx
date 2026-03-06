@@ -1,6 +1,8 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import NotificationBell from "@/features/shared/notifications/NotificationBell";
 import { listAuthorityIssues } from "@/lib/api/issues";
@@ -34,25 +36,42 @@ function initialsFromName(name?: string) {
 }
 
 export default function AuthorityTopbar({ user, onMenuClick }: Props) {
+  const pathname = usePathname() || "/authority";
   const [pendingCount, setPendingCount] = React.useState<number | null>(null);
 
-  React.useEffect(() => {
-    let isMounted = true;
+  const refreshPendingCount = React.useCallback(async () => {
+    try {
+      const issues = await listAuthorityIssues();
+      setPendingCount(issues.filter((issue) => issue.status === "pending").length);
+    } catch {
+      setPendingCount(0);
+    }
+  }, []);
 
-    listAuthorityIssues()
-      .then((issues) => {
-        if (!isMounted) return;
-        setPendingCount(issues.filter((issue) => issue.status === "pending").length);
-      })
-      .catch(() => {
-        if (!isMounted) return;
-        setPendingCount(0);
-      });
+  React.useEffect(() => {
+    void refreshPendingCount();
+  }, [refreshPendingCount, pathname]);
+
+  React.useEffect(() => {
+    const onIssuesUpdated = () => {
+      void refreshPendingCount();
+    };
+
+    const onWindowFocus = () => {
+      void refreshPendingCount();
+    };
+
+    window.addEventListener("authority:issues-updated", onIssuesUpdated);
+    window.addEventListener("focus", onWindowFocus);
 
     return () => {
-      isMounted = false;
+      window.removeEventListener("authority:issues-updated", onIssuesUpdated);
+      window.removeEventListener("focus", onWindowFocus);
     };
-  }, []);
+  }, [refreshPendingCount]);
+
+  const isPriorityPage = pathname === "/authority/priority" || pathname.startsWith("/authority/priority/");
+  const pendingReminderLabel = `${pendingCount ?? 0} Pending Issue${pendingCount === 1 ? "" : "s"}`;
 
   return (
     <header className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4">
@@ -78,15 +97,17 @@ export default function AuthorityTopbar({ user, onMenuClick }: Props) {
         </div>
 
         <div className="flex items-center gap-3 sm:gap-4">
-          <div className="hidden sm:inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-            {pendingCount ?? "..."} Pending Review
-          </div>
+          {!isPriorityPage ? (
+            <div className="hidden sm:inline-flex items-center rounded-full border border-blue-100 bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700">
+              {pendingReminderLabel}
+            </div>
+          ) : null}
 
           <NotificationBell />
 
           <div className="hidden sm:block h-8 w-px bg-gray-200" />
 
-          <div className="flex items-center gap-3">
+          <Link href="/authority/settings" className="flex items-center gap-3 rounded-xl px-1.5 py-1 transition-colors hover:bg-gray-50">
             {resolveProfilePhotoUrl(user.profilePhoto) ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -104,7 +125,7 @@ export default function AuthorityTopbar({ user, onMenuClick }: Props) {
               <div className="font-semibold text-gray-900">{user.fullName || "Authority User"}</div>
               <div className="text-sm text-gray-500">{user.email || ""}</div>
             </div>
-          </div>
+          </Link>
         </div>
       </div>
     </header>

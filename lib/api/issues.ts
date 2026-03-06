@@ -78,6 +78,11 @@ function unwrapError(error: unknown, fallback: string) {
   return err.response?.data?.message || err.message || fallback;
 }
 
+function notifyIssuesUpdated() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event("authority:issues-updated"));
+}
+
 export async function createIssueReport(draft: IssueDraft) {
   try {
     const formData = new FormData();
@@ -156,6 +161,7 @@ export async function listPriorityIssues() {
 export async function updateIssueStatus(id: string, status: string) {
   try {
     const resp = await apiClient.patch(API_ENDPOINTS.issues.updateStatus(id), { status });
+    notifyIssuesUpdated();
     return resp.data as { success?: boolean; message?: string; data?: UpdateIssueStatusResult };
   } catch (error: unknown) {
     throw new Error(unwrapError(error, "Failed to update status"));

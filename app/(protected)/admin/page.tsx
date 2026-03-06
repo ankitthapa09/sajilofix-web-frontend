@@ -230,6 +230,14 @@ type SelectedUser = {
   citizenshipNumber?: string;
 };
 
+type DashboardUserStats = {
+  totalUsers: number;
+  citizens: number;
+  authorities: number;
+  active: number;
+  suspended: number;
+};
+
 export default function AdminDashboard() {
   const [users, setUsers] = useState<AdminUserRow[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
@@ -238,6 +246,13 @@ export default function AdminDashboard() {
   const [loadingIssues, setLoadingIssues] = useState(true);
   const [page, setPage] = useState(1);
   const [pageMeta, setPageMeta] = useState<{ total: number; page: number; limit: number; totalPages: number } | null>(null);
+  const [dashboardStats, setDashboardStats] = useState<DashboardUserStats>({
+    totalUsers: 0,
+    citizens: 0,
+    authorities: 0,
+    active: 0,
+    suspended: 0,
+  });
   const pageSize = 8;
   const [roleFilter, setRoleFilter] = useState<Role | "all">("all");
   const [statusFilter, setStatusFilter] = useState<Status | "all">("all");
@@ -278,6 +293,34 @@ export default function AdminDashboard() {
 
   const watchedRole = useWatch({ control, name: "role" });
 
+  const loadDashboardStats = useCallback(async () => {
+    try {
+      const [allUsers, citizens, authorities, active, suspended] = await Promise.all([
+        adminListUsers({ page: 1, limit: 1 }),
+        adminListUsers({ page: 1, limit: 1, role: "citizen" }),
+        adminListUsers({ page: 1, limit: 1, role: "authority" }),
+        adminListUsers({ page: 1, limit: 1, status: "active" }),
+        adminListUsers({ page: 1, limit: 1, status: "suspended" }),
+      ]);
+
+      setDashboardStats({
+        totalUsers: allUsers.meta?.total ?? 0,
+        citizens: citizens.meta?.total ?? 0,
+        authorities: authorities.meta?.total ?? 0,
+        active: active.meta?.total ?? 0,
+        suspended: suspended.meta?.total ?? 0,
+      });
+    } catch {
+      setDashboardStats({
+        totalUsers: 0,
+        citizens: 0,
+        authorities: 0,
+        active: 0,
+        suspended: 0,
+      });
+    }
+  }, []);
+
   const loadUsers = useCallback(async () => {
     setLoadingUsers(true);
     setLoadError("");
@@ -305,6 +348,10 @@ export default function AdminDashboard() {
   }, [loadUsers]);
 
   useEffect(() => {
+    void loadDashboardStats();
+  }, [loadDashboardStats]);
+
+  useEffect(() => {
     let isMounted = true;
 
     listAuthorityIssues()
@@ -330,14 +377,7 @@ export default function AdminDashboard() {
     setPage(1);
   }, [roleFilter, statusFilter]);
 
-  const stats = useMemo(() => {
-    const totalUsers = pageMeta?.total ?? users.length;
-    const citizens = users.filter((u) => u.role === "citizen").length;
-    const authorities = users.filter((u) => u.role === "authority").length;
-    const active = users.filter((u) => u.status === "active").length;
-    const suspended = users.filter((u) => u.status === "suspended").length;
-    return { totalUsers, citizens, authorities, active, suspended };
-  }, [users, pageMeta?.total]);
+  const stats = dashboardStats;
 
   const recentUsers = useMemo(() => {
     return [...users]
@@ -547,6 +587,7 @@ export default function AdminDashboard() {
 
         setModalOpen(false);
         await loadUsers();
+        await loadDashboardStats();
         toast.success("Authority account created");
         return;
       } catch (e: unknown) {
@@ -575,6 +616,7 @@ export default function AdminDashboard() {
 
         setModalOpen(false);
         await loadUsers();
+        await loadDashboardStats();
         toast.success("Citizen account created");
         return;
       } catch (e: unknown) {
@@ -623,6 +665,7 @@ export default function AdminDashboard() {
 
         setModalOpen(false);
         await loadUsers();
+        await loadDashboardStats();
         toast.success("User updated");
         return;
       } catch (e: unknown) {
@@ -649,6 +692,7 @@ export default function AdminDashboard() {
       if (row.role === "authority") await adminDeleteAuthority(row.id);
       if (row.role === "citizen") await adminDeleteCitizen(row.id);
       await loadUsers();
+      await loadDashboardStats();
       toast.success("User deleted");
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -830,7 +874,7 @@ export default function AdminDashboard() {
             <button
               type="button"
               onClick={openCreateUser}
-              className="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-green-600 text-white font-semibold hover:bg-green-700 transition-colors"
+              className="inline-flex items-center gap-2 h-10 px-4 rounded-md bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors"
             >
               <Plus className="w-4 h-4" />
               New User
@@ -844,7 +888,7 @@ export default function AdminDashboard() {
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value as Role | "all")}
-                className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:ring-2 focus:ring-green-200"
+                className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:ring-2 focus:ring-blue-200"
               >
                 <option value="all">All Roles</option>
                 <option value="admin">Admin</option>
@@ -856,7 +900,7 @@ export default function AdminDashboard() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as Status | "all")}
-                className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:ring-2 focus:ring-green-200"
+                className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:ring-2 focus:ring-blue-200"
               >
                 <option value="all">All Status</option>
                 <option value="active">Active</option>
@@ -887,7 +931,7 @@ export default function AdminDashboard() {
                   <tr>
                     <td colSpan={8} className="px-4 py-14">
                       <div className="flex items-center justify-center gap-3 text-gray-600">
-                        <div className="h-5 w-5 rounded-full border-2 border-gray-300 border-t-green-600 animate-spin" />
+                        <div className="h-5 w-5 rounded-full border-2 border-gray-300 border-t-blue-600 animate-spin" />
                         <span className="text-sm">Loading users...</span>
                       </div>
                     </td>
@@ -1064,7 +1108,7 @@ export default function AdminDashboard() {
               <form onSubmit={handleSubmit(submit)} className="p-6 space-y-4 overflow-y-auto">
                 {modalLoading && (
                   <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700 flex items-center gap-3">
-                    <div className="h-4 w-4 rounded-full border-2 border-gray-300 border-t-green-600 animate-spin" />
+                    <div className="h-4 w-4 rounded-full border-2 border-gray-300 border-t-blue-600 animate-spin" />
                     <span>Loading details…</span>
                   </div>
                 )}
@@ -1146,7 +1190,7 @@ export default function AdminDashboard() {
                     </label>
                     <input
                       id="fullName"
-                      className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:bg-white focus:ring-2 focus:ring-green-200"
+                      className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:bg-white focus:ring-2 focus:ring-blue-200"
                       {...register("fullName")}
                       placeholder="e.g. Kathmandu Municipality"
                     />
@@ -1162,7 +1206,7 @@ export default function AdminDashboard() {
                     <input
                       id="email"
                       type="email"
-                      className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:bg-white focus:ring-2 focus:ring-green-200"
+                      className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:bg-white focus:ring-2 focus:ring-blue-200"
                       {...register("email")}
                       placeholder="e.g. dept@sajilofix.gov.np"
                     />
@@ -1179,7 +1223,7 @@ export default function AdminDashboard() {
                     </label>
                     <select
                       id="role"
-                      className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:ring-2 focus:ring-green-200"
+                      className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:ring-2 focus:ring-blue-200"
                       {...register("role")}
                       disabled={modalMode === "edit"}
                     >
@@ -1197,7 +1241,7 @@ export default function AdminDashboard() {
                     </label>
                     <select
                       id="status"
-                      className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:ring-2 focus:ring-green-200"
+                      className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:ring-2 focus:ring-blue-200"
                       {...register("status")}
                     >
                       <option value="active">Active</option>
@@ -1220,7 +1264,7 @@ export default function AdminDashboard() {
                   </label>
                   <input
                     id="department"
-                    className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:bg-white focus:ring-2 focus:ring-green-200 disabled:opacity-60"
+                    className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:bg-white focus:ring-2 focus:ring-blue-200 disabled:opacity-60"
                     {...register("department")}
                     placeholder={watchedRole === "authority" ? "e.g. Public Works" : "—"}
                     disabled={watchedRole !== "authority"}
@@ -1237,7 +1281,7 @@ export default function AdminDashboard() {
                     </label>
                     <input
                       id="phone"
-                      className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:bg-white focus:ring-2 focus:ring-green-200"
+                      className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:bg-white focus:ring-2 focus:ring-blue-200"
                       {...register("phone")}
                       placeholder="9800000000 or +9779800000000"
                     />
@@ -1253,7 +1297,7 @@ export default function AdminDashboard() {
                     <input
                       id="password"
                       type="password"
-                      className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:bg-white focus:ring-2 focus:ring-green-200"
+                      className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:bg-white focus:ring-2 focus:ring-blue-200"
                       {...register("password")}
                       placeholder={modalMode === "create" ? "At least 8 characters" : "New password (optional)"}
                     />
@@ -1268,7 +1312,7 @@ export default function AdminDashboard() {
                     </label>
                     <input
                       id="wardNumber"
-                      className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:bg-white focus:ring-2 focus:ring-green-200"
+                      className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:bg-white focus:ring-2 focus:ring-blue-200"
                       {...register("wardNumber")}
                       placeholder="e.g. 5"
                     />
@@ -1283,7 +1327,7 @@ export default function AdminDashboard() {
                     </label>
                     <input
                       id="municipality"
-                      className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:bg-white focus:ring-2 focus:ring-green-200"
+                      className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 px-3 outline-none focus:bg-white focus:ring-2 focus:ring-blue-200"
                       {...register("municipality")}
                       placeholder="e.g. Kathmandu"
                     />
@@ -1303,7 +1347,7 @@ export default function AdminDashboard() {
                         </label>
                         <input
                           id="district"
-                          className="h-10 w-full rounded-md border border-gray-200 bg-white px-3 outline-none focus:ring-2 focus:ring-green-200"
+                          className="h-10 w-full rounded-md border border-gray-200 bg-white px-3 outline-none focus:ring-2 focus:ring-blue-200"
                           {...register("district")}
                           placeholder="e.g. Kathmandu"
                         />
@@ -1315,7 +1359,7 @@ export default function AdminDashboard() {
                         </label>
                         <input
                           id="tole"
-                          className="h-10 w-full rounded-md border border-gray-200 bg-white px-3 outline-none focus:ring-2 focus:ring-green-200"
+                          className="h-10 w-full rounded-md border border-gray-200 bg-white px-3 outline-none focus:ring-2 focus:ring-blue-200"
                           {...register("tole")}
                           placeholder="e.g. Baneshwor"
                         />
@@ -1327,7 +1371,7 @@ export default function AdminDashboard() {
                         </label>
                         <input
                           id="dob"
-                          className="h-10 w-full rounded-md border border-gray-200 bg-white px-3 outline-none focus:ring-2 focus:ring-green-200"
+                          className="h-10 w-full rounded-md border border-gray-200 bg-white px-3 outline-none focus:ring-2 focus:ring-blue-200"
                           {...register("dob")}
                           placeholder="YYYY-MM-DD"
                         />
@@ -1339,7 +1383,7 @@ export default function AdminDashboard() {
                         </label>
                         <input
                           id="citizenshipNumber"
-                          className="h-10 w-full rounded-md border border-gray-200 bg-white px-3 outline-none focus:ring-2 focus:ring-green-200"
+                          className="h-10 w-full rounded-md border border-gray-200 bg-white px-3 outline-none focus:ring-2 focus:ring-blue-200"
                           {...register("citizenshipNumber")}
                           placeholder="e.g. 123-456-789"
                         />
@@ -1359,7 +1403,7 @@ export default function AdminDashboard() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="h-10 px-4 rounded-md bg-green-600 text-white font-semibold hover:bg-green-700 disabled:opacity-60"
+                    className="h-10 px-4 rounded-md bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-60"
                   >
                     {modalMode === "create" ? "Create" : "Save"}
                   </button>
@@ -1369,36 +1413,6 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function SummaryCard({
-  title,
-  value,
-  accent,
-  icon,
-}: {
-  title: string;
-  value: React.ReactNode;
-  accent: string;
-  icon: React.ReactNode;
-}) {
-  return (
-    <div
-      className={
-        "group bg-white border border-gray-200 rounded-2xl shadow-sm p-5 border-l-4 transition-all hover:-translate-y-0.5 hover:shadow-md " +
-        accent
-      }
-    >
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <div className="text-sm font-medium text-gray-500">{title}</div>
-          <div className="mt-2 text-3xl font-semibold text-gray-900 tracking-tight">{value}</div>
-          <div className="mt-2 h-1.5 w-24 rounded-full bg-linear-to-r from-gray-200 via-gray-100 to-transparent" />
-        </div>
-        <div className="transition-transform group-hover:scale-[1.03]">{icon}</div>
-      </div>
     </div>
   );
 }
@@ -1484,28 +1498,6 @@ function MiniStatCard({
           <div className="text-sm text-gray-500">{title}</div>
           <div className="text-2xl font-semibold text-gray-900">{value}</div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function StatPill({
-  label,
-  value,
-  icon,
-}: {
-  label: string;
-  value: React.ReactNode;
-  icon: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      <div className="w-10 h-10 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center">
-        {icon}
-      </div>
-      <div>
-        <div className="text-sm text-gray-500">{label}</div>
-        <div className="text-lg font-semibold text-gray-900">{value}</div>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import NotificationBell from "@/features/shared/notifications/NotificationBell";
@@ -105,7 +106,7 @@ export default function AdminTopbar({ user, onMenuClick }: Props) {
 
           <div className="hidden sm:block h-8 w-px bg-gray-200" />
 
-          <div className="flex items-center gap-3">
+          <Link href="/admin/settings" className="flex items-center gap-3 rounded-xl px-1.5 py-1 transition-colors hover:bg-gray-50">
             {resolveProfilePhotoUrl(user.profilePhoto) ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -123,7 +124,7 @@ export default function AdminTopbar({ user, onMenuClick }: Props) {
               <div className="font-semibold text-gray-900">{user.fullName || "Admin User"}</div>
               <div className="text-sm text-gray-500">{user.email || ""}</div>
             </div>
-          </div>
+          </Link>
         </div>
       </div>
     </header>
