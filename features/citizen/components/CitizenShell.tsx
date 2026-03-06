@@ -1,52 +1,44 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { X } from "lucide-react";
 
 import CitizenSidebar from "@/features/citizen/components/CitizenSidebar";
-import NotificationBell from "@/features/shared/notifications/NotificationBell";
+import CitizenTopbar from "@/features/citizen/components/CitizenTopbar";
+import { usersGetMe } from "@/lib/api/users";
 
 type Props = {
+  user: {
+    fullName?: string;
+    email?: string;
+    profilePhoto?: string;
+    status?: string;
+  };
   children: React.ReactNode;
 };
 
-export default function CitizenShell({ children }: Props) {
+export default function CitizenShell({ user, children }: Props) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const pathname = usePathname() || "/citizen";
+  const [liveStatus, setLiveStatus] = React.useState<string | undefined>(user.status);
 
-  const headerConfig = React.useMemo(() => {
-    if (pathname.startsWith("/citizen/report-new-issue")) {
-      return {
-        title: "Report New Issue",
-        subtitle: "Help us identify and resolve community issues.",
-        showCta: false,
-      };
-    }
+  React.useEffect(() => {
+    let isMounted = true;
 
-    if (pathname.startsWith("/citizen/reports")) {
-      return {
-        title: "My Reports",
-        subtitle: "Track the status of your reported issues.",
-        showCta: true,
-      };
-    }
+    usersGetMe()
+      .then((resp) => {
+        if (!isMounted) return;
+        const status = resp.user?.status;
+        setLiveStatus(typeof status === "string" ? status : undefined);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setLiveStatus(user.status);
+      });
 
-    if (pathname.startsWith("/citizen/map")) {
-      return {
-        title: "Explore Map",
-        subtitle: "Explore your reports geographically and track progress.",
-        showCta: true,
-      };
-    }
-
-    return {
-      title: "Dashboard Overview",
-      subtitle: "Welcome back! Here is whats happening with your reports.",
-      showCta: true,
+    return () => {
+      isMounted = false;
     };
-  }, [pathname]);
+  }, [user.status]);
 
   React.useEffect(() => {
     if (!mobileOpen) return;
@@ -62,7 +54,7 @@ export default function CitizenShell({ children }: Props) {
       <div className="flex min-h-dvh">
         {/* Desktop sidebar */}
         <div className="hidden lg:block">
-          <CitizenSidebar />
+          <CitizenSidebar userStatus={liveStatus} />
         </div>
 
         {/* Mobile drawer */}
@@ -86,45 +78,13 @@ export default function CitizenShell({ children }: Props) {
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <CitizenSidebar variant="mobile" onNavigate={() => setMobileOpen(false)} />
+              <CitizenSidebar userStatus={liveStatus} variant="mobile" onNavigate={() => setMobileOpen(false)} />
             </div>
           </div>
         ) : null}
 
         <main className="flex-1 min-w-0">
-          <header className="px-4 sm:px-6 lg:px-8 py-4 border-b border-gray-200 bg-white">
-            <div className="flex items-start sm:items-center justify-between gap-4">
-              <div className="flex items-start sm:items-center gap-3 min-w-0">
-                <button
-                  type="button"
-                  aria-label="Open menu"
-                  onClick={() => setMobileOpen(true)}
-                  className="lg:hidden w-10 h-10 rounded-md border border-gray-200 bg-white hover:bg-gray-50 flex items-center justify-center"
-                >
-                  <Menu className="w-5 h-5 text-gray-700" />
-                </button>
-
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo.png" alt="logo" className="w-8 h-8 object-contain" />
-                <div className="min-w-0">
-                  <h1 className="text-base sm:text-xl font-semibold truncate">{headerConfig.title}</h1>
-                  <p className="text-xs sm:text-sm text-gray-500 truncate">{headerConfig.subtitle}</p>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-                <NotificationBell />
-                {headerConfig.showCta ? (
-                  <Link
-                    href="/citizen/report-new-issue/category"
-                    className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md text-sm sm:text-base w-full sm:w-auto text-center"
-                  >
-                    Report New Issue
-                  </Link>
-                ) : null}
-              </div>
-            </div>
-          </header>
+          <CitizenTopbar user={user} onMenuClick={() => setMobileOpen(true)} />
 
           <div className="px-4 sm:px-6 lg:px-8 py-6">{children}</div>
         </main>

@@ -91,12 +91,7 @@ export default function AuthoritySidebar({
       </nav>
 
       <div className="px-4 pb-6">
-        <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-          <div className="text-sm font-semibold text-gray-800">KMC Admin</div>
-          <div className="text-xs text-gray-500">Public Works Dept.</div>
-        </div>
-
-        <form action={handleLogout} onSubmit={confirmLogout} className="mt-4">
+        <form action={handleLogout} onSubmit={confirmLogout} className="mt-1">
           <button
             type="submit"
             className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowLeft,
   Camera,
@@ -11,6 +12,7 @@ import {
   MapPin,
   AlertTriangle,
   UploadCloud,
+  X,
 } from "lucide-react";
 import { useReportIssue } from "@/features/citizen/components/ReportIssueProvider";
 
@@ -32,12 +34,24 @@ const steps: Step[] = [
 export default function ReportNewIssueUploadPhotosStep() {
   const { draft, setPhotos } = useReportIssue();
   const files = draft.photos;
+  const previewUrls = useMemo(
+    () => files.map((file) => ({ file, url: URL.createObjectURL(file) })),
+    [files]
+  );
+
+  useEffect(() => {
+    return () => {
+      previewUrls.forEach((item) => URL.revokeObjectURL(item.url));
+    };
+  }, [previewUrls]);
 
   const fileLabel = useMemo(() => {
     if (!files.length) return "";
     if (files.length === 1) return files[0]?.name ?? "1 file";
     return `${files.length} files selected`;
   }, [files]);
+
+  const remainingSlots = Math.max(0, 3 - files.length);
 
   return (
     <div className="space-y-6">
@@ -114,8 +128,14 @@ export default function ReportNewIssueUploadPhotosStep() {
                 accept="image/png,image/jpeg"
                 multiple
                 onChange={(event) => {
-                  const list = Array.from(event.target.files ?? []).slice(0, 3);
-                  setPhotos(list);
+                  const selected = Array.from(event.target.files ?? []);
+                  if (!selected.length || remainingSlots === 0) {
+                    event.currentTarget.value = "";
+                    return;
+                  }
+                  const nextFiles = [...files, ...selected].slice(0, 3);
+                  setPhotos(nextFiles);
+                  event.currentTarget.value = "";
                 }}
               />
               <div className="rounded-2xl border border-dashed border-gray-300 bg-white/70 px-6 py-10 text-center hover:border-emerald-300 hover:bg-emerald-50/30 transition-colors">
@@ -123,12 +143,34 @@ export default function ReportNewIssueUploadPhotosStep() {
                   <UploadCloud className="h-6 w-6" />
                 </div>
                 <div className="mt-4 text-sm font-semibold text-gray-800">Click to upload photos</div>
-                <div className="text-xs text-gray-500">PNG, JPG up to 10MB each</div>
+                <div className="text-xs text-gray-500">PNG, JPG up to 10MB each (max 3 photos)</div>
                 {fileLabel ? (
                   <div className="mt-3 text-xs font-semibold text-emerald-700">{fileLabel}</div>
                 ) : null}
+                <div className="mt-1 text-xs text-gray-500">{remainingSlots} slot{remainingSlots === 1 ? "" : "s"} remaining</div>
               </div>
             </label>
+
+            {previewUrls.length ? (
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {previewUrls.map(({ file, url }, index) => (
+                  <div key={`${file.name}-${index}`} className="relative overflow-hidden rounded-xl border border-gray-200 bg-white">
+                    <div className="relative h-28 w-full">
+                      <Image src={url} alt={file.name} fill sizes="(max-width: 640px) 100vw, 33vw" className="object-cover" />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setPhotos(files.filter((_, fileIndex) => fileIndex !== index))}
+                      className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/75"
+                      aria-label={`Remove ${file.name}`}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                    <div className="truncate px-3 py-2 text-xs text-gray-600">{file.name}</div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
 
             <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 text-sm text-emerald-800">
               <span className="font-semibold">Best Practices:</span> Take clear photos from multiple angles. Include wide

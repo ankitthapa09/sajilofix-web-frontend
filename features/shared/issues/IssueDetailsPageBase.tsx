@@ -14,6 +14,7 @@ import {
 } from "@/lib/api/issues";
 import { toast } from "sonner";
 import IssueLocationMapSection from "@/features/shared/map/IssueLocationMapSection";
+import IssueImageViewerModal from "@/features/shared/issues/IssueImageViewerModal";
 
 const CATEGORY_LABELS: Record<string, string> = {
   roads_potholes: "Roads & Potholes",
@@ -117,6 +118,7 @@ export default function IssueDetailsPageBase({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activePhoto, setActivePhoto] = useState(0);
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isReporterModalOpen, setIsReporterModalOpen] = useState(false);
   const [isReporterLoading, setIsReporterLoading] = useState(false);
@@ -176,13 +178,13 @@ export default function IssueDetailsPageBase({
       .join(", ");
 
   useEffect(() => {
-    if (!isReporterModalOpen) return;
+    if (!isReporterModalOpen && !isImageViewerOpen) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [isReporterModalOpen]);
+  }, [isReporterModalOpen, isImageViewerOpen]);
 
   const goPrev = () => {
     if (!hasPhotos) return;
@@ -294,7 +296,12 @@ export default function IssueDetailsPageBase({
               {hasPhotos ? (
                 <div className="mt-4 space-y-4">
                   <div className="relative overflow-hidden rounded-2xl border border-gray-200">
-                    <div className="relative h-64 w-full">
+                    <button
+                      type="button"
+                      onClick={() => setIsImageViewerOpen(true)}
+                      className="relative block h-64 w-full"
+                      aria-label="Open issue image viewer"
+                    >
                       <Image
                         src={activePhotoUrl}
                         alt="Issue evidence"
@@ -302,7 +309,7 @@ export default function IssueDetailsPageBase({
                         sizes="(max-width: 1024px) 100vw, 60vw"
                         className="object-cover"
                       />
-                    </div>
+                    </button>
                     {photos.length > 1 ? (
                       <div className="absolute inset-0 flex items-center justify-between px-3">
                         <button
@@ -551,6 +558,16 @@ export default function IssueDetailsPageBase({
           </div>
         </div>
       ) : null}
+
+      <IssueImageViewerModal
+        isOpen={isImageViewerOpen}
+        photos={photos.map((photo) => resolvePhotoUrl(photo))}
+        activeIndex={activePhoto}
+        onClose={() => setIsImageViewerOpen(false)}
+        onPrev={goPrev}
+        onNext={goNext}
+        onSelect={setActivePhoto}
+      />
     </div>
   );
 }

@@ -15,7 +15,7 @@ type Props = {
 
 export default function RecentActivity({ items, isLoading = false }: Props) {
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="text-base font-semibold text-gray-900">Recent Activity</h3>
         <span className="text-xs font-medium text-gray-500">Latest updates</span>
@@ -30,7 +30,7 @@ export default function RecentActivity({ items, isLoading = false }: Props) {
       ) : items.length ? (
         <ul className="space-y-3">
           {items.map((item) => (
-            <li key={item.id} className="flex items-start gap-3">
+            <li key={item.id} className="flex items-start gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-gray-50">
               <div
                 className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
                   item.unread ? "bg-blue-50 text-blue-600" : "bg-emerald-50 text-emerald-600"

@@ -171,25 +171,25 @@ const DashboardPage = () => {
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <div className="md:col-span-2">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md">
             <h3 className="mb-4 text-base font-semibold text-gray-900">Report Status Overview</h3>
 
             <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <div className="rounded-xl border border-slate-200 bg-linear-to-br from-slate-50 to-gray-50 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm">
                 <div className="text-sm text-gray-500">Pending Review</div>
                 <div className="mt-2 text-2xl font-semibold text-gray-900">{stats.pending}</div>
               </div>
-              <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
+              <div className="rounded-xl border border-blue-100 bg-linear-to-br from-blue-50 to-indigo-50 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm">
                 <div className="text-sm text-blue-600">In Progress</div>
                 <div className="mt-2 text-2xl font-semibold text-blue-900">{stats.inProgress}</div>
               </div>
-              <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+              <div className="rounded-xl border border-emerald-100 bg-linear-to-br from-emerald-50 to-teal-50 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm">
                 <div className="text-sm text-emerald-600">Resolved</div>
                 <div className="mt-2 text-2xl font-semibold text-emerald-900">{stats.resolved}</div>
               </div>
             </div>
 
-            <div className="rounded-xl border border-violet-100 bg-violet-50 p-4 text-sm text-violet-700">
+            <div className="rounded-xl border border-violet-100 bg-linear-to-r from-violet-50 to-fuchsia-50 p-4 text-sm text-violet-700 transition-colors hover:from-violet-100 hover:to-fuchsia-100">
               Average Response Time:{" "}
               {typeof stats.avgResponse === "number"
                 ? `${stats.avgResponse.toFixed(1)} days`

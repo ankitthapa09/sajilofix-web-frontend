@@ -13,6 +13,15 @@ export default async function CitizenLayout({
 	if (user.role !== "citizen") redirect("/login");
 
 	return (
-		<CitizenShell>{children}</CitizenShell>
+		<CitizenShell
+			user={{
+				fullName: user.fullName,
+				email: user.email,
+				profilePhoto: typeof user.profilePhoto === "string" ? user.profilePhoto : undefined,
+				status: typeof user.status === "string" ? user.status : undefined,
+			}}
+		>
+			{children}
+		</CitizenShell>
 	);
 }

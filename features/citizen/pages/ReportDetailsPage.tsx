@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { getIssueReport, type IssueListItem } from "@/lib/api/issues";
 import IssueLocationMapSection from "@/features/shared/map/IssueLocationMapSection";
+import IssueImageViewerModal from "@/features/shared/issues/IssueImageViewerModal";
 
 const URGENCY_STYLES: Record<string, { label: string; tone: string }> = {
   low: { label: "Low", tone: "bg-blue-50 text-blue-700 border-blue-200" },
@@ -102,6 +103,7 @@ export default function ReportDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activePhoto, setActivePhoto] = useState(0);
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
 
   useEffect(() => {
     if (!reportId) return;
@@ -127,6 +129,15 @@ export default function ReportDetailsPage() {
       isMounted = false;
     };
   }, [reportId]);
+
+  useEffect(() => {
+    if (!isImageViewerOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isImageViewerOpen]);
 
   const urgency = useMemo(() => {
     if (!issue) return null;
@@ -293,13 +304,20 @@ export default function ReportDetailsPage() {
               {hasPhotos ? (
                 <div className="mt-4 space-y-4">
                   <div className="relative overflow-hidden rounded-2xl border border-gray-200">
-                    <Image
-                      src={activePhotoUrl}
-                      alt="Issue evidence"
-                      width={600}
-                      height={256}
-                      className="h-64 w-full object-cover"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setIsImageViewerOpen(true)}
+                      className="block w-full"
+                      aria-label="Open issue image viewer"
+                    >
+                      <Image
+                        src={activePhotoUrl}
+                        alt="Issue evidence"
+                        width={600}
+                        height={256}
+                        className="h-64 w-full object-cover"
+                      />
+                    </button>
                     {photos.length > 1 ? (
                       <div className="absolute inset-0 flex items-center justify-between px-3">
                         <button
@@ -377,7 +395,7 @@ export default function ReportDetailsPage() {
             <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
               <div className="text-sm font-semibold text-gray-700">Progress Timeline</div>
               <ol className="mt-4 space-y-6 border-l border-gray-200 pl-6">
-                {timelineSteps.map((step, index) => {
+                {timelineSteps.map((step) => {
                   const Icon = step.icon;
                   const isDone = step.completed;
                   const isCurrent = step.isCurrent;
@@ -422,6 +440,16 @@ export default function ReportDetailsPage() {
           </div>
         </div>
       ) : null}
+
+      <IssueImageViewerModal
+        isOpen={isImageViewerOpen && hasPhotos}
+        photos={photos.map((photo) => resolvePhotoUrl(photo))}
+        activeIndex={activePhoto}
+        onClose={() => setIsImageViewerOpen(false)}
+        onPrev={goPrev}
+        onNext={goNext}
+        onSelect={setActivePhoto}
+      />
     </div>
   );
 }

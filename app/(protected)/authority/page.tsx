@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { listAuthorityIssues, type IssueListItem } from "@/lib/api/issues";
 import { listNotifications, type NotificationItem } from "@/lib/api/notifications";
+import { usersGetMe } from "@/lib/api/users";
 
 const CATEGORY_LABELS: Record<string, string> = {
   roads_potholes: "Roads & Potholes",
@@ -85,19 +86,38 @@ function activityIcon(type: NotificationItem["type"]) {
   return BarChart3;
 }
 
+function formatToday() {
+  return new Date().toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function resolveGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
 export default function AuthorityDashboardPage() {
   const [issues, setIssues] = useState<IssueListItem[]>([]);
   const [activities, setActivities] = useState<NotificationItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [viewerName, setViewerName] = useState("Authority");
 
   useEffect(() => {
     let isMounted = true;
-    Promise.all([listAuthorityIssues(), listNotifications({ page: 1, limit: 5 })])
-      .then(([issueData, notificationData]) => {
+    Promise.all([listAuthorityIssues(), listNotifications({ page: 1, limit: 5 }), usersGetMe()])
+      .then(([issueData, notificationData, me]) => {
         if (!isMounted) return;
         setIssues(issueData);
         setActivities(notificationData.items ?? []);
+        const name = (me.user?.fullName ?? "").trim();
+        setViewerName(name || "Authority");
         setError(null);
       })
       .catch((err: unknown) => {
@@ -183,6 +203,9 @@ export default function AuthorityDashboardPage() {
     },
   ];
 
+  const greeting = resolveGreeting();
+  const today = formatToday();
+
   return (
     <div className="space-y-6">
       {isLoading ? (
@@ -193,6 +216,14 @@ export default function AuthorityDashboardPage() {
         <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm text-rose-700">{error}</div>
       ) : (
         <>
+          <div className="rounded-2xl border border-blue-100 bg-linear-to-r from-blue-50 via-indigo-50 to-sky-50 p-5 shadow-sm">
+            <div className="text-xs font-semibold uppercase tracking-wide text-blue-600">Overview</div>
+            <div className="mt-1 text-2xl font-semibold text-gray-900">
+              {greeting}, {viewerName}
+            </div>
+            <div className="mt-1 text-sm text-gray-600">{today}</div>
+          </div>
+
           <div className="grid gap-4 lg:grid-cols-4">
             {statCards.map((stat) => {
               const Icon = stat.icon;
