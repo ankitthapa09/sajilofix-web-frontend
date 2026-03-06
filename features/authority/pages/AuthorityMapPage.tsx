@@ -118,8 +118,10 @@ export default function AuthorityMapPage() {
       setSelectedIssueId(null);
       return;
     }
-    if (!selectedIssueId || !filtered.some((issue) => issue.id === selectedIssueId)) {
-      setSelectedIssueId(filtered[0].id);
+
+    // Keep user-controlled selection only; do not auto-preselect on initial load.
+    if (selectedIssueId && !filtered.some((issue) => issue.id === selectedIssueId)) {
+      setSelectedIssueId(null);
     }
   }, [filtered, selectedIssueId]);
 
@@ -127,7 +129,8 @@ export default function AuthorityMapPage() {
     const pending = mappableIssues.filter((issue) => issue.status === "pending").length;
     const inProgress = mappableIssues.filter((issue) => issue.status === "in_progress").length;
     const resolved = mappableIssues.filter((issue) => issue.status === "resolved").length;
-    return { pending, inProgress, resolved };
+    const rejected = mappableIssues.filter((issue) => issue.status === "rejected").length;
+    return { pending, inProgress, resolved, rejected, total: mappableIssues.length };
   }, [mappableIssues]);
 
   const mapPoints: MapIssuePoint[] = useMemo(
@@ -179,6 +182,18 @@ export default function AuthorityMapPage() {
           <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
             <button
               type="button"
+              onClick={() => setStatusFilter("all")}
+              className={
+                "rounded-full border px-2.5 py-1 " +
+                (statusFilter === "all"
+                  ? "border-blue-300 bg-blue-100 text-blue-700"
+                  : "border-blue-200 bg-blue-50 text-blue-700")
+              }
+            >
+              All Issues ({counts.total})
+            </button>
+            <button
+              type="button"
               onClick={() => setStatusFilter("resolved")}
               className={
                 "rounded-full border px-2.5 py-1 " +
@@ -215,10 +230,10 @@ export default function AuthorityMapPage() {
             </button>
             <button
               type="button"
-              onClick={() => setStatusFilter("all")}
+              onClick={() => setStatusFilter("rejected")}
               className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-600 hover:border-gray-300"
             >
-              <Filter className="h-3.5 w-3.5" /> Filter
+              <Filter className="h-3.5 w-3.5" /> Rejected ({counts.rejected})
             </button>
           </div>
         </div>
@@ -236,6 +251,8 @@ export default function AuthorityMapPage() {
               selectedIssueId={selectedIssueId ?? undefined}
               onSelectIssue={(id) => setSelectedIssueId(id)}
               className="h-130 w-full overflow-hidden rounded-xl border border-gray-200"
+              zoom={12}
+              selectedZoom={17}
               showLegend
             />
           </div>

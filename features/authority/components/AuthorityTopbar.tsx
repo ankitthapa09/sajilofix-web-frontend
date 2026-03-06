@@ -3,6 +3,7 @@
 import React from "react";
 import { Menu } from "lucide-react";
 import NotificationBell from "@/features/shared/notifications/NotificationBell";
+import { listAuthorityIssues } from "@/lib/api/issues";
 
 type Props = {
   user: {
@@ -33,6 +34,26 @@ function initialsFromName(name?: string) {
 }
 
 export default function AuthorityTopbar({ user, onMenuClick }: Props) {
+  const [pendingCount, setPendingCount] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    let isMounted = true;
+
+    listAuthorityIssues()
+      .then((issues) => {
+        if (!isMounted) return;
+        setPendingCount(issues.filter((issue) => issue.status === "pending").length);
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setPendingCount(0);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <header className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4">
       <div className="flex items-center justify-between">
@@ -58,7 +79,7 @@ export default function AuthorityTopbar({ user, onMenuClick }: Props) {
 
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="hidden sm:inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-            3 Pending Review
+            {pendingCount ?? "..."} Pending Review
           </div>
 
           <NotificationBell />

@@ -28,6 +28,7 @@ type Props = {
   className?: string;
   center?: [number, number];
   zoom?: number;
+  selectedZoom?: number;
   showLegend?: boolean;
   pickMode?: boolean;
   pickedLocation?: { latitude: number; longitude: number } | null;
@@ -98,11 +99,13 @@ function FitBoundsToData({
   selectedIssueId,
   pickedLocation,
   focusZoom,
+  selectedZoom,
 }: {
   issues: MapIssuePoint[];
   selectedIssueId?: string;
   pickedLocation?: { latitude: number; longitude: number } | null;
   focusZoom: number;
+  selectedZoom: number;
 }) {
   const map = useMap();
 
@@ -114,7 +117,7 @@ function FitBoundsToData({
 
     const selected = selectedIssueId ? issues.find((issue) => issue.id === selectedIssueId) : undefined;
     if (selected) {
-      map.setView([selected.latitude, selected.longitude], focusZoom, { animate: true });
+      map.setView([selected.latitude, selected.longitude], selectedZoom, { animate: true });
       return;
     }
 
@@ -127,7 +130,7 @@ function FitBoundsToData({
 
     const bounds = issues.map((issue) => [issue.latitude, issue.longitude] as [number, number]);
     map.fitBounds(bounds, { padding: [36, 36] });
-  }, [focusZoom, issues, map, pickedLocation, selectedIssueId]);
+  }, [focusZoom, issues, map, pickedLocation, selectedIssueId, selectedZoom]);
 
   return null;
 }
@@ -139,6 +142,7 @@ export default function IssueMapClient({
   className,
   center = [27.7172, 85.324],
   zoom = 12,
+  selectedZoom = 16,
   showLegend = false,
   pickMode = false,
   pickedLocation,
@@ -168,6 +172,7 @@ export default function IssueMapClient({
           selectedIssueId={selectedIssueId}
           pickedLocation={pickedLocation}
           focusZoom={zoom}
+          selectedZoom={selectedZoom}
         />
 
         {issues.map((issue) => {
