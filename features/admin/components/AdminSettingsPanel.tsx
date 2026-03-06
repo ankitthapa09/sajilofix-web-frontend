@@ -89,7 +89,7 @@ export default function AdminSettingsPanel() {
           {tab === "profile" ? (
             <AdminSettingsProfile />
           ) : tab === "security" ? (
-            <div className="min-h-[260px] rounded-lg border border-gray-200 bg-white p-6">
+            <div className="min-h-65 rounded-lg border border-gray-200 bg-white p-6">
               <div className="text-sm font-semibold text-gray-900">Security</div>
               <div className="mt-2 text-sm text-gray-500">
                 Change your password regularly to keep your admin account secure.
@@ -152,7 +152,7 @@ export default function AdminSettingsPanel() {
               </form>
             </div>
           ) : (
-            <div className="min-h-[260px] rounded-lg border border-gray-200 bg-white p-6">
+            <div className="min-h-65 rounded-lg border border-gray-200 bg-white p-6">
               <div className="text-sm text-gray-700 font-semibold">{tabs.find((x) => x.key === tab)?.label}</div>
               <div className="mt-2 text-sm text-gray-500">
                 This section is UI-ready. Hook it to real settings APIs when available.

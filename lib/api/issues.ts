@@ -73,6 +73,8 @@ export type ReverseGeocodeResult = {
   longitude: number;
 };
 
+export type LocationSearchResult = ReverseGeocodeResult;
+
 function unwrapError(error: unknown, fallback: string) {
   const err = error as { response?: { data?: { message?: string } }; message?: string };
   return err.response?.data?.message || err.message || fallback;
@@ -140,6 +142,17 @@ export async function listIssueReports() {
   }
 }
 
+export async function listNearbyIssues() {
+  try {
+    const resp = await apiClient.get(API_ENDPOINTS.issues.list, {
+      params: { scope: "all" },
+    });
+    return (resp.data?.data ?? []) as IssueListItem[];
+  } catch (error: unknown) {
+    throw new Error(unwrapError(error, "Failed to load nearby issues"));
+  }
+}
+
 export async function listAuthorityIssues() {
   try {
     const resp = await apiClient.get(API_ENDPOINTS.issues.list);
@@ -203,5 +216,16 @@ export async function reverseGeocodeLocation(latitude: number, longitude: number
     return resp.data?.data as ReverseGeocodeResult;
   } catch (error: unknown) {
     throw new Error(unwrapError(error, "Failed to auto-fill location"));
+  }
+}
+
+export async function searchLocationByText(query: string, limit = 6) {
+  try {
+    const resp = await apiClient.get(API_ENDPOINTS.issues.searchLocation, {
+      params: { q: query, limit },
+    });
+    return (resp.data?.data ?? []) as LocationSearchResult[];
+  } catch (error: unknown) {
+    throw new Error(unwrapError(error, "Failed to search location"));
   }
 }

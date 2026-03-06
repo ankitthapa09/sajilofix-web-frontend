@@ -136,6 +136,7 @@ export default function SignupForm() {
       email: signupData.email || "",
       phoneCountryCode: signupData.phoneCountryCode || "+977",
       phoneNationalNumber: signupData.phoneNationalNumber || "",
+      citizenshipNumber: signupData.citizenshipNumber || "",
     },
   });
 
@@ -185,6 +186,10 @@ export default function SignupForm() {
 
   const onStep1Submit = (data: SignupStep1Data) => {
     setApiError("");
+    const sanitizedData: SignupStep1Data = {
+      ...data,
+      citizenshipNumber: data.citizenshipNumber?.trim() || undefined,
+    };
     const derivedRole = deriveRoleFromEmail(data.email);
     if (derivedRole !== "citizen") {
       const msg =
@@ -195,7 +200,7 @@ export default function SignupForm() {
       toast.error(msg);
       return;
     }
-    setSignupData({ ...signupData, ...data });
+    setSignupData({ ...signupData, ...sanitizedData });
     setCurrentStep(2);
   };
 
@@ -316,19 +321,6 @@ export default function SignupForm() {
       {/* Step 1: Basic Info */}
       {currentStep === 1 && (
         <form onSubmit={step1Form.handleSubmit(onStep1Submit)} className="space-y-4">
-          {/* Role (email-derived) */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <p className="text-xs sm:text-sm text-gray-700">
-              Role is derived from your email.
-            </p>
-            <p className="text-sm font-semibold text-gray-900 mt-1">
-              Detected role: {deriveRoleFromEmail(step1Form.watch("email") || "")}
-            </p>
-            <p className="text-xs text-gray-600 mt-1">
-              Authority accounts are created by admin.
-            </p>
-          </div>
-
           {/* Full Name */}
           <div>
             <label htmlFor="fullName" className="block text-sm font-medium text-gray-900 mb-2">
@@ -435,6 +427,25 @@ export default function SignupForm() {
             </div>
           </div>
 
+          {/* Citizenship Number */}
+          <div>
+            <label htmlFor="citizenshipNumber" className="block text-sm font-medium text-gray-900 mb-2">
+              Citizenship Number <span className="text-gray-500">(optional)</span>
+            </label>
+            <input
+              {...step1Form.register("citizenshipNumber")}
+              type="text"
+              id="citizenshipNumber"
+              className="block w-full h-11 px-4 bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              placeholder="e.g., 01-01-75-12345"
+            />
+            {step1Form.formState.errors.citizenshipNumber && (
+              <p className="mt-1 text-xs text-red-600">
+                {step1Form.formState.errors.citizenshipNumber.message}
+              </p>
+            )}
+          </div>
+
           {/* Continue Button */}
           <button
             type="submit"
@@ -452,7 +463,7 @@ export default function SignupForm() {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-gray-800 font-medium">Location details</p>
             <p className="text-sm text-gray-700 mt-1">
-              We use this to route your reports to the right authorities.
+              Select your exact district, municipality, and ward so your reports reach the correct local office faster.
             </p>
           </div>
 

@@ -140,6 +140,7 @@ export default function AuthoritySettingsProfile() {
           <div className="text-sm font-semibold text-gray-900">Profile Photo</div>
           <div className="mt-4 flex items-center gap-4">
             {photoUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
               <img src={photoUrl} alt="Profile" className="w-14 h-14 rounded-md object-cover border border-gray-200" />
             ) : (
               <div className="w-14 h-14 rounded-md bg-blue-50 border border-blue-100 text-blue-700 flex items-center justify-center font-semibold">

@@ -32,6 +32,7 @@ type Props = {
   showLegend?: boolean;
   pickMode?: boolean;
   pickedLocation?: { latitude: number; longitude: number } | null;
+  pickedZoom?: number;
   onPickLocation?: (latitude: number, longitude: number) => void;
 };
 
@@ -100,18 +101,20 @@ function FitBoundsToData({
   pickedLocation,
   focusZoom,
   selectedZoom,
+  pickedZoom,
 }: {
   issues: MapIssuePoint[];
   selectedIssueId?: string;
   pickedLocation?: { latitude: number; longitude: number } | null;
   focusZoom: number;
   selectedZoom: number;
+  pickedZoom: number;
 }) {
   const map = useMap();
 
   React.useEffect(() => {
     if (pickedLocation) {
-      map.setView([pickedLocation.latitude, pickedLocation.longitude], focusZoom, { animate: true });
+      map.setView([pickedLocation.latitude, pickedLocation.longitude], pickedZoom, { animate: true });
       return;
     }
 
@@ -130,7 +133,7 @@ function FitBoundsToData({
 
     const bounds = issues.map((issue) => [issue.latitude, issue.longitude] as [number, number]);
     map.fitBounds(bounds, { padding: [36, 36] });
-  }, [focusZoom, issues, map, pickedLocation, selectedIssueId, selectedZoom]);
+  }, [focusZoom, issues, map, pickedLocation, pickedZoom, selectedIssueId, selectedZoom]);
 
   return null;
 }
@@ -146,6 +149,7 @@ export default function IssueMapClient({
   showLegend = false,
   pickMode = false,
   pickedLocation,
+  pickedZoom = 16,
   onPickLocation,
 }: Props) {
   const initialCenter = (pickedLocation
@@ -173,6 +177,7 @@ export default function IssueMapClient({
           pickedLocation={pickedLocation}
           focusZoom={zoom}
           selectedZoom={selectedZoom}
+          pickedZoom={pickedZoom}
         />
 
         {issues.map((issue) => {

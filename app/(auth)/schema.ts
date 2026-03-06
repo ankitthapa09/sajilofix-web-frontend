@@ -57,6 +57,19 @@ export const signupStep1Schema = z.object({
     .string()
     .min(1, "Phone number is required")
     .regex(/^\d{10}$/, "Phone number must be exactly 10 digits"),
+  citizenshipNumber: z.preprocess(
+    (value) => {
+      if (typeof value !== "string") return value;
+      const trimmed = value.trim();
+      return trimmed.length ? trimmed : undefined;
+    },
+    z
+      .string()
+      .regex(/^[A-Za-z0-9\-/]+$/, "Use only letters, numbers, '-' or '/'")
+      .min(4, "Citizenship number must be at least 4 characters")
+      .max(30, "Citizenship number must not exceed 30 characters")
+      .optional()
+  ),
 });
 
 // Signup Step 2 Schema

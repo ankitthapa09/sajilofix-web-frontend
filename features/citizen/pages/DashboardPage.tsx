@@ -6,6 +6,7 @@ import StatCard from "../components/StatCard";
 import RecentActivity, { type ActivityItem } from "../components/RecentActivity";
 import { listIssueReports, type IssueListItem } from "@/lib/api/issues";
 import { getUnreadNotificationCount, listNotifications } from "@/lib/api/notifications";
+import { usersGetMe } from "@/lib/api/users";
 
 function getStatusCounts(issues: IssueListItem[]) {
   return issues.reduce(
@@ -55,22 +56,68 @@ function averageResponseDays(issues: IssueListItem[]) {
   return sum / durations.length;
 }
 
-const DashboardPage = () => {
+function formatToday(date: Date) {
+  const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  const weekday = weekdays[date.getDay()] ?? "";
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = months[date.getMonth()] ?? "";
+  const year = date.getFullYear();
+
+  return `${weekday}, ${day} ${month} ${year}`;
+}
+
+function resolveGreeting(hour: number) {
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+type DashboardPageProps = {
+  initialViewerName?: string;
+};
+
+const DashboardPage = ({ initialViewerName = "" }: DashboardPageProps) => {
   const [issues, setIssues] = React.useState<IssueListItem[]>([]);
   const [activityItems, setActivityItems] = React.useState<ActivityItem[]>([]);
   const [unreadCount, setUnreadCount] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [viewerName, setViewerName] = React.useState((initialViewerName || "Citizen").trim());
+  const [greetingInfo, setGreetingInfo] = React.useState({ greeting: "Welcome", today: "" });
+
+  React.useEffect(() => {
+    const now = new Date();
+    setGreetingInfo({
+      greeting: resolveGreeting(now.getHours()),
+      today: formatToday(now),
+    });
+  }, []);
 
   React.useEffect(() => {
     let isMounted = true;
 
     const loadDashboard = async () => {
       try {
-        const [issuesData, notificationsData, unread] = await Promise.all([
+        const [issuesData, notificationsData, unread, me] = await Promise.all([
           listIssueReports(),
           listNotifications({ page: 1, limit: 6 }),
           getUnreadNotificationCount(),
+          usersGetMe(),
         ]);
 
         if (!isMounted) return;
@@ -85,6 +132,8 @@ const DashboardPage = () => {
             unread: !item.isRead,
           }))
         );
+        const name = (me.user?.fullName ?? "").trim();
+        setViewerName(name || initialViewerName.trim() || "Citizen");
         setError(null);
       } catch (err: unknown) {
         if (!isMounted) return;
@@ -101,7 +150,7 @@ const DashboardPage = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [initialViewerName]);
 
   const stats = React.useMemo(() => {
     const total = issues.length;
@@ -130,11 +179,21 @@ const DashboardPage = () => {
     };
   }, [issues]);
 
+  const greeting = greetingInfo.greeting;
+  const today = greetingInfo.today;
+
   return (
     <div className="space-y-6">
       {error ? (
         <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>
       ) : null}
+
+      <div className="rounded-2xl border border-blue-100 bg-linear-to-r from-blue-50 via-indigo-50 to-sky-50 p-5 shadow-sm">
+        <div className="text-2xl font-semibold text-gray-900">
+          {greeting}, {viewerName}
+        </div>
+        <div className="mt-1 text-sm text-gray-600">{today || " "}</div>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard

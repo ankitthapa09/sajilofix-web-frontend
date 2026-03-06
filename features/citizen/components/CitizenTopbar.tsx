@@ -118,6 +118,7 @@ export default function CitizenTopbar({ user, onMenuClick }: Props) {
             className="flex items-center gap-3 rounded-lg px-1.5 py-1 transition-colors hover:bg-blue-50"
           >
             {resolveProfilePhotoUrl(user.profilePhoto) ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={resolveProfilePhotoUrl(user.profilePhoto)}
                 alt={user.fullName || "Citizen"}

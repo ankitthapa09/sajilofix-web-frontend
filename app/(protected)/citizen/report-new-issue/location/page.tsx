@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
   ArrowLeft,
@@ -11,10 +12,11 @@ import {
   ClipboardList,
   MapPin,
   AlertTriangle,
+  Search,
   X,
 } from "lucide-react";
 import { useReportIssue } from "@/features/citizen/components/ReportIssueProvider";
-import { reverseGeocodeLocation } from "@/lib/api/issues";
+import { reverseGeocodeLocation, searchLocationByText, type LocationSearchResult } from "@/lib/api/issues";
 
 const IssueMapClient = dynamic(() => import("@/features/shared/map/IssueMapClient"), {
   ssr: false,
@@ -69,10 +71,21 @@ const steps: Step[] = [
 ];
 
 export default function ReportNewIssueLocationStep() {
+  const router = useRouter();
   const { draft, updateLocation } = useReportIssue();
+  const didInitializeLocationRef = React.useRef(false);
   const [isAutoFilling, setIsAutoFilling] = React.useState(false);
   const [autoFillError, setAutoFillError] = React.useState<string | null>(null);
   const [isClearMapOpen, setIsClearMapOpen] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [searchError, setSearchError] = React.useState<string | null>(null);
+  const [isSearching, setIsSearching] = React.useState(false);
+  const [isLocationConfirmed, setIsLocationConfirmed] = React.useState(false);
+  const lastAutoAppliedKeyRef = React.useRef<string>("");
+  const [inlinePickedLocation, setInlinePickedLocation] = React.useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const [clearMapPickedLocation, setClearMapPickedLocation] = React.useState<{
     latitude: number;
     longitude: number;
@@ -80,23 +93,33 @@ export default function ReportNewIssueLocationStep() {
 
   const lat = Number(draft.location.latitude);
   const lng = Number(draft.location.longitude);
-  const pickedLocation = React.useMemo(
-    () =>
-      Number.isFinite(lat) && Number.isFinite(lng) && isWithinNepal(lat, lng)
-        ? { latitude: lat, longitude: lng }
-        : null,
-    [lat, lng]
-  );
+
+  React.useEffect(() => {
+    if (didInitializeLocationRef.current) return;
+    didInitializeLocationRef.current = true;
+
+    // Start location step with empty fields until user explicitly picks/uses a location.
+    updateLocation({
+      latitude: "",
+      longitude: "",
+      address: "",
+      district: "",
+      municipality: "",
+      ward: "",
+      landmark: "",
+    });
+    setIsLocationConfirmed(false);
+  }, [updateLocation]);
 
   React.useEffect(() => {
     if (!isClearMapOpen) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    setClearMapPickedLocation(pickedLocation);
+    setClearMapPickedLocation(inlinePickedLocation);
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [isClearMapOpen, pickedLocation]);
+  }, [inlinePickedLocation, isClearMapOpen]);
 
   React.useEffect(() => {
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
@@ -111,10 +134,10 @@ export default function ReportNewIssueLocationStep() {
 
   const autoFillLocation = React.useCallback(
     async (latitude: number, longitude: number) => {
-      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return false;
       if (!isWithinNepal(latitude, longitude)) {
         setAutoFillError("Selected point is outside Nepal. Please pick a location inside Nepal.");
-        return;
+        return false;
       }
 
       setIsAutoFilling(true);
@@ -131,8 +154,10 @@ export default function ReportNewIssueLocationStep() {
           ward: result.ward ?? parseWardFromText(result.address) ?? draft.location.ward,
           landmark: result.landmark ?? draft.location.landmark,
         });
+        return true;
       } catch (err: unknown) {
         setAutoFillError(err instanceof Error ? err.message : "Failed to auto-fill location");
+        return false;
       } finally {
         setIsAutoFilling(false);
       }
@@ -141,13 +166,13 @@ export default function ReportNewIssueLocationStep() {
   );
 
   const commitPickedLocation = React.useCallback(
-    (latitude: number, longitude: number) => {
+    async (latitude: number, longitude: number) => {
       const fixedLat = Number(latitude.toFixed(6));
       const fixedLng = Number(longitude.toFixed(6));
 
       if (!isWithinNepal(fixedLat, fixedLng)) {
         setAutoFillError("Selected point is outside Nepal. Please pick a location inside Nepal.");
-        return;
+        return false;
       }
 
       updateLocation({
@@ -155,10 +180,101 @@ export default function ReportNewIssueLocationStep() {
         longitude: fixedLng.toFixed(6),
       });
 
-      void autoFillLocation(fixedLat, fixedLng);
+      return await autoFillLocation(fixedLat, fixedLng);
     },
     [autoFillLocation, updateLocation]
   );
+
+  const stagePickedLocation = React.useCallback((latitude: number, longitude: number) => {
+    const fixedLat = Number(latitude.toFixed(6));
+    const fixedLng = Number(longitude.toFixed(6));
+
+    if (!isWithinNepal(fixedLat, fixedLng)) {
+      setAutoFillError("Selected point is outside Nepal. Please pick a location inside Nepal.");
+      return;
+    }
+
+    setAutoFillError(null);
+    setInlinePickedLocation({ latitude: fixedLat, longitude: fixedLng });
+    setClearMapPickedLocation({ latitude: fixedLat, longitude: fixedLng });
+    updateLocation({
+      latitude: fixedLat.toFixed(6),
+      longitude: fixedLng.toFixed(6),
+    });
+    void autoFillLocation(fixedLat, fixedLng);
+    setIsLocationConfirmed(false);
+  }, [autoFillLocation, updateLocation]);
+
+  const applySearchedLocation = React.useCallback(
+    (location: LocationSearchResult, syncSearchInput = true) => {
+      const latitude = Number(location.latitude.toFixed(6));
+      const longitude = Number(location.longitude.toFixed(6));
+
+      if (!isWithinNepal(latitude, longitude)) {
+        setAutoFillError("Selected point is outside Nepal. Please pick a location inside Nepal.");
+        return;
+      }
+
+      setInlinePickedLocation({ latitude, longitude });
+      setClearMapPickedLocation({ latitude, longitude });
+
+      setAutoFillError(null);
+      setIsLocationConfirmed(false);
+      if (syncSearchInput) {
+        setSearchQuery(location.address);
+      }
+      setSearchError(null);
+    },
+    []
+  );
+
+  const runLocationSearch = React.useCallback(async (queryText: string, autoApplyTop = false) => {
+    const q = queryText.trim();
+    if (q.length < 2) {
+      setSearchError(null);
+      return;
+    }
+
+    setIsSearching(true);
+    setSearchError(null);
+
+    try {
+      const results = await searchLocationByText(q, 8);
+      if (!results.length) {
+        setSearchError("No matching locations found. Try a different keyword.");
+        return;
+      }
+
+      if (autoApplyTop && results[0]) {
+        const top = results[0];
+        const key = `${q.toLowerCase()}|${top.latitude.toFixed(5)}|${top.longitude.toFixed(5)}`;
+        if (lastAutoAppliedKeyRef.current !== key) {
+          lastAutoAppliedKeyRef.current = key;
+          applySearchedLocation(top, false);
+        }
+      }
+    } catch (err: unknown) {
+      setSearchError(err instanceof Error ? err.message : "Failed to search location");
+    } finally {
+      setIsSearching(false);
+    }
+  }, [applySearchedLocation]);
+
+  React.useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) {
+      setSearchError(null);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      void runLocationSearch(q, true);
+    }, 400);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [runLocationSearch, searchQuery]);
 
   return (
     <div className="space-y-6">
@@ -225,25 +341,65 @@ export default function ReportNewIssueLocationStep() {
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <div>
               <h3 className="text-base font-semibold text-gray-900">Specify Location</h3>
-              <p className="text-sm text-gray-500">Help us locate the issue precisely</p>
+              <p className="text-sm text-gray-500">Search or pin the exact spot, then confirm it before continuing.</p>
+            </div>
+
+            <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-3">
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="relative flex-1">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") {
+                        event.preventDefault();
+                        void runLocationSearch(searchQuery, true);
+                      }
+                    }}
+                    placeholder="Search any location in Nepal (e.g., Ratna Park, Kathmandu)"
+                    className="h-10 w-full rounded-lg border border-gray-200 bg-white pl-9 pr-3 text-sm text-gray-700"
+                  />
+                </div>
+                <div className="inline-flex h-10 items-center rounded-lg border border-blue-200 bg-blue-50 px-3 text-xs font-semibold text-blue-700">
+                  {isSearching ? "Searching..." : "Auto search"}
+                </div>
+              </div>
+
+              {searchError ? <div className="mt-2 text-xs font-semibold text-rose-600">{searchError}</div> : null}
             </div>
 
             <div className="mt-6 rounded-2xl border border-gray-200 bg-slate-100/70 p-3">
               <div className="mb-3 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setIsClearMapOpen(true)}
-                  className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 hover:border-gray-300"
-                >
-                  Open Clear Map
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsClearMapOpen(true)}
+                    className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 hover:border-gray-300"
+                  >
+                    Open Clear Map
+                  </button>
+                  <button
+                    type="button"
+                    disabled={!inlinePickedLocation}
+                    onClick={async () => {
+                      if (!inlinePickedLocation) return;
+                      const ok = await commitPickedLocation(inlinePickedLocation.latitude, inlinePickedLocation.longitude);
+                      setIsLocationConfirmed(Boolean(ok));
+                    }}
+                    className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
+                  >
+                    Use this location
+                  </button>
+                </div>
               </div>
               <IssueMapClient
                 pickMode
                 center={[27.7172, 85.324]}
-                zoom={12}
-                pickedLocation={pickedLocation}
-                onPickLocation={commitPickedLocation}
+                zoom={11}
+                pickedZoom={11}
+                pickedLocation={inlinePickedLocation}
+                onPickLocation={stagePickedLocation}
                 className="h-80 w-full overflow-hidden rounded-xl border border-gray-200"
               />
               <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-600">
@@ -251,8 +407,8 @@ export default function ReportNewIssueLocationStep() {
                   <MapPin className="h-3.5 w-3.5" /> Click map to pin exact location
                 </div>
                 <div className="rounded-full border border-gray-200 bg-white px-2.5 py-1 font-semibold">
-                  {pickedLocation
-                    ? `Selected: ${pickedLocation.latitude.toFixed(6)}, ${pickedLocation.longitude.toFixed(6)}`
+                  {inlinePickedLocation
+                    ? `Selected: ${inlinePickedLocation.latitude.toFixed(6)}, ${inlinePickedLocation.longitude.toFixed(6)}`
                     : "No coordinates selected yet"}
                 </div>
                 {isAutoFilling ? (
@@ -263,6 +419,11 @@ export default function ReportNewIssueLocationStep() {
                 {autoFillError ? (
                   <div className="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 font-semibold text-rose-700">
                     {autoFillError}
+                  </div>
+                ) : null}
+                {isLocationConfirmed ? (
+                  <div className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-700">
+                    Location confirmed
                   </div>
                 ) : null}
               </div>
@@ -359,12 +520,14 @@ export default function ReportNewIssueLocationStep() {
                 Previous
               </Link>
 
-              <Link
-                href="/citizen/report-new-issue/details"
-                className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+              <button
+                type="button"
+                disabled={!isLocationConfirmed}
+                onClick={() => router.push("/citizen/report-new-issue/details")}
+                className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
               >
                 Continue
-              </Link>
+              </button>
             </div>
           </div>
         </div>
@@ -392,8 +555,9 @@ export default function ReportNewIssueLocationStep() {
               <IssueMapClient
                 pickMode
                 center={[27.7172, 85.324]}
-                zoom={13}
-                pickedLocation={clearMapPickedLocation ?? pickedLocation}
+                zoom={12}
+                pickedZoom={12}
+                pickedLocation={clearMapPickedLocation}
                 onPickLocation={(latitude, longitude) => {
                   const fixedLat = Number(latitude.toFixed(6));
                   const fixedLng = Number(longitude.toFixed(6));
@@ -404,7 +568,14 @@ export default function ReportNewIssueLocationStep() {
                   }
 
                   setAutoFillError(null);
+                  setInlinePickedLocation({ latitude: fixedLat, longitude: fixedLng });
                   setClearMapPickedLocation({ latitude: fixedLat, longitude: fixedLng });
+                  updateLocation({
+                    latitude: fixedLat.toFixed(6),
+                    longitude: fixedLng.toFixed(6),
+                  });
+                  void autoFillLocation(fixedLat, fixedLng);
+                  setIsLocationConfirmed(false);
                 }}
                 className="h-full w-full overflow-hidden rounded-xl border border-gray-200"
               />
@@ -427,9 +598,11 @@ export default function ReportNewIssueLocationStep() {
                 <button
                   type="button"
                   disabled={!clearMapPickedLocation}
-                  onClick={() => {
+                  onClick={async () => {
                     if (!clearMapPickedLocation) return;
-                    commitPickedLocation(clearMapPickedLocation.latitude, clearMapPickedLocation.longitude);
+                    setInlinePickedLocation(clearMapPickedLocation);
+                    const ok = await commitPickedLocation(clearMapPickedLocation.latitude, clearMapPickedLocation.longitude);
+                    setIsLocationConfirmed(Boolean(ok));
                     setIsClearMapOpen(false);
                   }}
                   className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"

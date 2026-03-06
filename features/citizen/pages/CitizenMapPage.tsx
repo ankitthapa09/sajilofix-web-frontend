@@ -2,8 +2,8 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
-import { CalendarDays, CircleDot, Eye, Filter, MapPin, Search, ThumbsUp } from "lucide-react";
-import { listIssueReports, type IssueListItem } from "@/lib/api/issues";
+import { CalendarDays, CircleDot, Eye, MapPin, Search, ThumbsUp } from "lucide-react";
+import { listNearbyIssues, type IssueListItem } from "@/lib/api/issues";
 import type { MapIssuePoint } from "@/features/shared/map/IssueMapClient";
 
 const IssueMapClient = dynamic(() => import("@/features/shared/map/IssueMapClient"), {
@@ -72,7 +72,7 @@ export default function CitizenMapPage() {
   useEffect(() => {
     let isMounted = true;
 
-    listIssueReports()
+    listNearbyIssues()
       .then((data) => {
         if (!isMounted) return;
         setIssues(data);
@@ -80,7 +80,7 @@ export default function CitizenMapPage() {
       })
       .catch((err: unknown) => {
         if (!isMounted) return;
-        setError(err instanceof Error ? err.message : "Failed to load mapped reports");
+        setError(err instanceof Error ? err.message : "Failed to load nearby issues");
       })
       .finally(() => {
         if (!isMounted) return;
@@ -128,18 +128,14 @@ export default function CitizenMapPage() {
     const pending = mappableIssues.filter((issue) => issue.status === "pending").length;
     const inProgress = mappableIssues.filter((issue) => issue.status === "in_progress").length;
     const resolved = mappableIssues.filter((issue) => issue.status === "resolved").length;
-    return { pending, inProgress, resolved };
+    const rejected = mappableIssues.filter((issue) => issue.status === "rejected").length;
+    return { total: mappableIssues.length, pending, inProgress, resolved, rejected };
   }, [mappableIssues]);
 
-  useEffect(() => {
-    if (!filtered.length) {
-      setSelectedIssueId(null);
-      return;
-    }
-
-    if (!selectedIssueId || !filtered.some((issue) => issue.id === selectedIssueId)) {
-      setSelectedIssueId(filtered[0].id);
-    }
+  const effectiveSelectedIssueId = useMemo(() => {
+    if (!filtered.length) return null;
+    if (selectedIssueId && filtered.some((issue) => issue.id === selectedIssueId)) return selectedIssueId;
+    return filtered[0].id;
   }, [filtered, selectedIssueId]);
 
   const mapPoints: MapIssuePoint[] = useMemo(
@@ -171,6 +167,18 @@ export default function CitizenMapPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => setStatusFilter("all")}
+              className={
+                "rounded-full border px-2.5 py-1 " +
+                (statusFilter === "all"
+                  ? "border-blue-300 bg-blue-100 text-blue-700"
+                  : "border-blue-200 bg-blue-50 text-blue-700")
+              }
+            >
+              All Issues ({counts.total})
+            </button>
             <button
               type="button"
               onClick={() => setStatusFilter("resolved")}
@@ -207,13 +215,17 @@ export default function CitizenMapPage() {
             >
               Pending ({counts.pending})
             </button>
-
             <button
               type="button"
-              onClick={() => setStatusFilter("all")}
-              className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-gray-600 hover:border-gray-300"
+              onClick={() => setStatusFilter("rejected")}
+              className={
+                "rounded-full border px-2.5 py-1 " +
+                (statusFilter === "rejected"
+                  ? "border-rose-300 bg-rose-100 text-rose-700"
+                  : "border-rose-200 bg-rose-50 text-rose-700")
+              }
             >
-              <Filter className="h-3.5 w-3.5" /> Filter
+              Rejected ({counts.rejected})
             </button>
           </div>
         </div>
@@ -228,9 +240,11 @@ export default function CitizenMapPage() {
           <div className="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm">
             <IssueMapClient
               issues={mapPoints}
-              selectedIssueId={selectedIssueId ?? undefined}
+              selectedIssueId={effectiveSelectedIssueId ?? undefined}
               onSelectIssue={(id) => setSelectedIssueId(id)}
               className="h-150 w-full overflow-hidden rounded-xl border border-gray-200"
+              zoom={11}
+              selectedZoom={17}
               showLegend
             />
           </div>
@@ -244,7 +258,7 @@ export default function CitizenMapPage() {
             <div className="flex-1 space-y-3 overflow-y-auto pr-1">
               {filtered.length ? (
                 filtered.map((issue, index) => {
-                  const isSelected = selectedIssueId === issue.id;
+                  const isSelected = effectiveSelectedIssueId === issue.id;
                   const chip = STATUS_CHIP_STYLES[issue.status] ?? "border-slate-200 bg-slate-50 text-slate-700";
                   const dot = STATUS_DOT_STYLES[issue.status] ?? "bg-slate-500";
 
@@ -261,7 +275,7 @@ export default function CitizenMapPage() {
                       }
                     >
                       <div className="mb-2 flex items-center justify-between gap-2 text-xs font-semibold">
-                        <span className="text-emerald-600">{formatIssueId(index, filtered.length)}</span>
+                        <span className="text-blue-600">{formatIssueId(index, filtered.length)}</span>
                         <span className={`rounded-full border px-2 py-0.5 ${chip}`}>{STATUS_LABELS[issue.status] ?? issue.status}</span>
                       </div>
 

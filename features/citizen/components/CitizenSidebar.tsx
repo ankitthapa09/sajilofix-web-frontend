@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { handleLogout } from "@/lib/actions/auth-action";
 
@@ -45,7 +46,7 @@ function CitizenSidebarInner({
   return (
     <aside className={asideClassName}>
       <div className="flex items-center gap-3 mb-8">
-        <img src="/logo.png" alt="logo" className="w-20 h-12 object-contain" />
+        <Image src="/logo.png" alt="logo" width={80} height={80} className="h-20 w-20 object-contain" priority />
         <div>
           <div className="font-semibold text-blue-700">SajiloFix</div>
           <div className="text-sm text-gray-500">Citizen Portal</div>
